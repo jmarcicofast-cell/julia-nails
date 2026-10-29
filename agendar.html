@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Agende seu horário · Júlia Marcico Nails</title>
+<meta name="description" content="Agende seu horário de manicure com a Júlia Marcico Nails.">
+<meta name="theme-color" content="#c4507a">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root{--bg:#faf6f3;--card:#fff;--ink:#2a1f24;--muted:#8b7b81;--line:#efe4e7;--rose:#c4507a;--rose-ink:#fff;--rose-soft:#f8e6ed;--green:#2e8b66;--green-soft:#e3f3ec;--red:#c2483f;--red-soft:#fae7e5;--amber:#a86d14;--amber-soft:#fbf0dc;--shadow:0 1px 2px rgba(60,20,35,.04),0 6px 18px rgba(60,20,35,.06);--r:18px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17121a;--card:#221b25;--ink:#f3e9ee;--muted:#a8979f;--line:#352b38;--rose:#e27aa0;--rose-ink:#1b1015;--rose-soft:#3a2330;--green:#5cc497;--green-soft:#1d3229;--red:#ee7a70;--red-soft:#3b2220;--amber:#e3ac57;--amber-soft:#3a2f1c;--shadow:none}}
+:root[data-theme=dark]{--bg:#17121a;--card:#221b25;--ink:#f3e9ee;--muted:#a8979f;--line:#352b38;--rose:#e27aa0;--rose-ink:#1b1015;--rose-soft:#3a2330;--green:#5cc497;--green-soft:#1d3229;--red:#ee7a70;--red-soft:#3b2220;--amber:#e3ac57;--amber-soft:#3a2f1c;--shadow:none}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 Manrope,system-ui,sans-serif;min-height:100vh}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:600;margin:0;letter-spacing:-.01em}
+h1{font-size:30px;line-height:1.1}h2{font-size:20px}h3{font-size:16.5px}
+p{margin:0}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 60px}
+.hero{padding:calc(26px + env(safe-area-inset-top)) 16px 6px;max-width:560px;margin:0 auto}
+.hero .k{font-size:11.5px;color:var(--rose);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:6px}
+.hero p{color:var(--muted);margin-top:8px}
+.tabs{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 16px}
+.tabs-in{max-width:528px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tab{background:none;border:0;border-radius:10px;padding:9px 4px;font:700 13px Manrope,sans-serif;color:var(--muted);cursor:pointer;position:relative}
+.tab.on{background:var(--rose);color:var(--rose-ink)}
+.tab .dot{position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--red)}
+.view{display:none}.view.on{display:block}
+.view>*+*{margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.stack>*+*{margin-top:12px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grow{flex:1}
+.muted{color:var(--muted)}.small{font-size:13px}.center{text-align:center}
+.mt{margin-top:12px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 14px Manrope,sans-serif;padding:10px 14px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center;text-decoration:none;min-height:44px}
+.btn.p{background:var(--rose);border-color:var(--rose);color:var(--rose-ink)}
+.btn.g{background:var(--green-soft);border-color:transparent;color:var(--green)}
+.btn.s{padding:6px 12px;min-height:36px;font-size:13px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5}
+.chip{display:inline-flex;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--rose-soft);color:var(--rose);white-space:nowrap}
+.chip.pendente{background:var(--amber-soft);color:var(--amber)}
+.chip.confirmado{background:var(--green-soft);color:var(--green)}
+.chip.concluido{background:var(--line);color:var(--muted)}
+.chip.cancelado,.chip.recusado{background:var(--red-soft);color:var(--red)}
+input,select,textarea{width:100%;font:16px Manrope,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none;min-height:46px}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--rose)}
+.f{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.step{display:flex;align-items:center;gap:10px}
+.step>span{width:26px;height:26px;border-radius:50%;background:var(--rose-soft);color:var(--rose);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.dim{opacity:.45;pointer-events:none}
+.servs{display:grid;gap:8px}
+.sv{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;width:100%;border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:12px 14px;font:inherit;color:inherit;cursor:pointer}
+.sv small{display:block;color:var(--muted);font-size:12.5px}
+.sv b.pr{font-family:Fraunces,serif;font-size:17px;white-space:nowrap}
+.sv.on{border-color:var(--rose);background:var(--rose-soft);box-shadow:inset 0 0 0 1px var(--rose)}
+.dstrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.dstrip::-webkit-scrollbar{display:none}
+.dd{flex:none;width:58px;scroll-snap-align:start;border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:8px 0;text-align:center;font:700 11px Manrope,sans-serif;color:var(--muted);cursor:pointer;text-transform:capitalize}
+.dd b{display:block;font-family:Fraunces,serif;font-size:20px;color:var(--ink);line-height:1.2}
+.dd.on{background:var(--rose);border-color:var(--rose);color:var(--rose-ink)}
+.dd.on b{color:var(--rose-ink)}
+.dd:disabled{opacity:.35;cursor:default}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.slot{border:1px solid var(--line);background:var(--bg);border-radius:11px;padding:10px 0;font:700 14px Manrope,sans-serif;color:var(--ink);cursor:pointer}
+.slot.on{background:var(--rose);color:var(--rose-ink);border-color:var(--rose)}
+.enc{background:var(--rose-soft);border-color:transparent;box-shadow:none}
+.resumo{background:var(--bg);border-radius:12px;padding:12px;font-size:14px}
+.resumo b{font-family:Fraunces,serif;font-size:17px}
+.seg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;background:var(--bg)}
+.seg input:checked+span{background:var(--rose);color:var(--rose-ink);border-color:var(--rose)}
+.meu{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.meu+.meu{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.msgs{display:flex;flex-direction:column;gap:6px;padding:4px 0 8px;min-height:120px}
+.msg{max-width:82%;padding:8px 12px;border-radius:16px 16px 16px 4px;background:var(--card);border:1px solid var(--line);white-space:pre-wrap;word-wrap:break-word}
+.msg.me{align-self:flex-end;background:var(--rose);color:var(--rose-ink);border-color:var(--rose);border-radius:16px 16px 4px 16px}
+.msg time{display:block;font-size:10.5px;opacity:.7;text-align:right;margin-top:2px}
+.chatbar{position:sticky;bottom:0;display:flex;gap:8px;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+.sheet-bg{position:fixed;inset:0;background:rgba(20,10,15,.45);z-index:20;display:none;align-items:flex-end;justify-content:center}
+.sheet-bg.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;animation:up .22s ease}
+@keyframes up{from{transform:translateY(30px);opacity:.6}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;transition:.25s;z-index:40;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.ok{font-size:44px;text-align:center}
+.foot{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="k">Agendamento online</div>
+  <h1 id="nome">Júlia Marcico Nails</h1>
+  <p id="boas">Escolha o serviço e o melhor horário pra você 💅</p>
+</div>
+
+<div class="tabs"><div class="tabs-in">
+  <button class="tab on" data-v="agendar">Agendar</button>
+  <button class="tab" data-v="meus">Meus horários</button>
+  <button class="tab" data-v="chat">Conversar<i class="dot" id="chatDot" hidden></i></button>
+</div></div>
+
+<main class="wrap">
+  <section class="view on" id="v-agendar">
+    <div id="passos"><p class="muted center mt">Carregando horários…</p></div>
+    <div class="card enc stack">
+      <div><b>Não encontrou um horário bom?</b><p class="muted small">Deixe seu nome na lista de encaixe. Se abrir uma vaga, você recebe uma mensagem.</p></div>
+      <button class="btn s" data-act="encaixe" style="align-self:flex-start">Entrar na lista de encaixe</button>
+    </div>
+    <form id="dados" class="card stack" autocomplete="on" hidden>
+      <div class="step"><span>4</span><h3>Seus dados</h3></div>
+      <div class="resumo" id="resumo"></div>
+      <div><label class="f">Seu nome</label><input name="nome" autocomplete="name" required></div>
+      <div><label class="f">Seu WhatsApp com DDD</label><input name="telefone" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
+      <div><label class="f">Observação (opcional)</label><input name="obs" placeholder="Ex.: cor que quer, alguma alergia…"></div>
+      <button class="btn p block" id="btnEnviar">Solicitar horário</button>
+      <p class="muted small center">O horário fica reservado e a confirmação chega pelo WhatsApp.</p>
+    </form>
+  </section>
+
+  <section class="view" id="v-meus"></section>
+
+  <section class="view" id="v-chat">
+    <form id="chatIdent" class="card stack">
+      <h3>Fale comigo por aqui</h3>
+      <p class="muted small">Tire dúvidas sobre serviços, valores ou horários.</p>
+      <div><label class="f">Seu nome</label><input name="nome" autocomplete="name" required></div>
+      <div><label class="f">Seu WhatsApp com DDD</label><input name="telefone" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
+      <button class="btn p block">Começar conversa</button>
+    </form>
+    <div id="chatBox" hidden>
+      <div id="msgs" class="msgs"></div>
+      <form id="chatForm" class="chatbar" autocomplete="off"><input name="t" placeholder="Escreva sua mensagem"><button class="btn p">Enviar</button></form>
+    </div>
+    <a id="btnWhats" class="btn g block" target="_blank" rel="noopener" hidden>Prefere WhatsApp? Chamar agora</a>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</main>
+
+<div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* ================= NÚCLEO DE DADOS (igual ao painel) ================= */
+const CFG = window.APP_CONFIG || {};
+const DEMO = !(CFG.firebase && CFG.firebase.apiKey && !/COLE/i.test(CFG.firebase.apiKey));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+const bus = new EventTarget();
+const mem = {};
+function lsGet(k){ try{ const v = localStorage.getItem(k); if (v) return JSON.parse(v); }catch(e){} return mem[k] ?? null; }
+function lsSet(k, v){ mem[k] = v; try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const demoCol = p => lsGet('demo:' + p) || {};
+function demoSave(p, c){ lsSet('demo:' + p, c); bus.dispatchEvent(new Event('ch')); }
+addEventListener('storage', e => { if (e.key && e.key.startsWith('demo:')) bus.dispatchEvent(new Event('ch')); });
+function onBus(run){ run(); bus.addEventListener('ch', run); return () => bus.removeEventListener('ch', run); }
+let fb = null;
+async function initStore(){
+  if (DEMO) return;
+  const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const [a, f] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js')]);
+  const app = a.initializeApp(CFG.firebase);
+  fb = { f, db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }) };
+}
+const store = {
+  async set(path, id, data){
+    if (DEMO){ const c = demoCol(path); c[id] = { ...(c[id] || {}), ...data }; demoSave(path, c); return id; }
+    await fb.f.setDoc(fb.f.doc(fb.db, path, id), data, { merge: true }); return id;
+  },
+  add(path, data){ return store.set(path, uid(), data); },
+  watch(path, cb){
+    if (DEMO) return onBus(() => cb(Object.entries(demoCol(path)).map(([id, d]) => ({ id, ...d }))));
+    return fb.f.onSnapshot(fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => console.error(path, e));
+  },
+  watchDoc(path, id, cb){
+    if (DEMO) return onBus(() => { const d = demoCol(path)[id]; cb(d ? { id, ...d } : null); });
+    return fb.f.onSnapshot(fb.f.doc(fb.db, path, id), d => cb(d.exists() ? { id: d.id, ...d.data() } : null), e => console.error(path, e));
+  }
+};
+
+/* ================= UTILITÁRIOS ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const toMin = h => { const [a, b] = String(h || '0:0').split(':').map(Number); return (a || 0) * 60 + (b || 0); };
+const toHM = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const brl = n => (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const digits = s => String(s || '').replace(/\D/g, '');
+const waLink = (tel, msg) => { let d = digits(tel); if (d && d.length <= 11) d = '55' + d; return `https://wa.me/${d}?text=${encodeURIComponent(msg || '')}`; };
+const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const dataLonga = s => { const t = parseYmd(s).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }); return t.charAt(0).toUpperCase() + t.slice(1); };
+const hora = t => { if (!t) return ''; const d = new Date(t); return ymd(d) === ymd(new Date()) ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
+const DEFAULT_CONFIG = {
+  nome: 'Júlia Marcico Nails', whatsapp: '', boasVindas: 'Escolha o serviço e o melhor horário pra você 💅',
+  intervalo: 30, antecedenciaHoras: 2, diasAFrente: 30,
+  horarios: { 0:{ativo:false}, 1:{ativo:false}, 2:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 3:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 4:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 5:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 6:{ativo:true,ini:'08:00',fim:'16:00',pIni:'',pFim:''} },
+  bloqueios: [],
+  servicos: [ { id:'s1',nome:'Mão',duracao:45,preco:35 }, { id:'s2',nome:'Pé',duracao:45,preco:40 }, { id:'s3',nome:'Pé e mão',duracao:90,preco:70 }, { id:'s4',nome:'Esmaltação em gel',duracao:60,preco:60 }, { id:'s5',nome:'Alongamento em gel',duracao:120,preco:150 }, { id:'s6',nome:'Manutenção do alongamento',duracao:90,preco:100 } ]
+};
+
+function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
+  if (!cfg || !dataStr) return [];
+  const d = parseYmd(dataStr); const h = cfg.horarios?.[d.getDay()];
+  if (!h || !h.ativo || (cfg.bloqueios || []).includes(dataStr)) return [];
+  const ini = toMin(h.ini), fim = toMin(h.fim), step = Number(cfg.intervalo) || 30;
+  const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
+  const occ = ocupados.filter(o => o.data === dataStr).map(o => [toMin(o.ini), toMin(o.fim)]);
+  const limite = Date.now() + (Number(antecH) || 0) * 3600e3;
+  const out = [];
+  for (let t = ini; t + dur <= fim; t += step){
+    const e = t + dur;
+    if (pI != null && t < pF && e > pI) continue;
+    if (occ.some(([a, b]) => t < b && e > a)) continue;
+    const dt = new Date(d); dt.setHours(0, t, 0, 0);
+    if (dt.getTime() < limite) continue;
+    out.push(toHM(t));
+  }
+  return out;
+}
+
+/* ================= ESTADO ================= */
+const S = { cfg: null, ocup: [], serv: null, dia: null, hora: null, meus: {}, msgs: [], conv: null };
+const me = () => lsGet('cliente') || {};
+const salvarMe = (nome, telefone) => lsSet('cliente', { nome, telefone });
+const meusIds = () => lsGet('meusAgs') || [];
+const servAtual = () => (S.cfg?.servicos || []).find(s => s.id === S.serv);
+const LABEL = { pendente: 'Aguardando confirmação', confirmado: 'Confirmado ✓', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Não foi possível' };
+
+let toastT;
+function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2800); }
+function sheet(html, mount){ $('#sheet').innerHTML = html; $('#sheetBg').classList.add('on'); mount && mount($('#sheet')); }
+function closeSheet(){ $('#sheetBg').classList.remove('on'); }
+$('#sheetBg').addEventListener('click', e => { if (e.target.id === 'sheetBg') closeSheet(); });
+
+function go(v){
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+  S.tab = v;
+  if (v === 'chat') abrirChatSeTiver();
+  if (v === 'meus') renderMeus();
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
+
+/* ================= AGENDAR ================= */
+function diasDisponiveis(){
+  const c = S.cfg; const n = Number(c.diasAFrente) || 30; const out = []; const t = new Date();
+  for (let i = 0; i < n; i++){ const d = new Date(t); d.setDate(t.getDate() + i); out.push(ymd(d)); }
+  return out;
+}
+function renderPassos(){
+  const c = S.cfg; const el = $('#passos');
+  if (!c){ el.innerHTML = '<div class="card center muted">Agenda em configuração. Volte em breve 💕</div>'; return; }
+  const sv = c.servicos || []; const s = servAtual(); const dur = Number(s?.duracao) || 60;
+  const dias = diasDisponiveis().map(d => ({ d, livres: s ? slotsDoDia(c, S.ocup, d, dur, c.antecedenciaHoras).length : 1 }));
+  const slots = s && S.dia ? slotsDoDia(c, S.ocup, S.dia, dur, c.antecedenciaHoras) : [];
+  if (S.hora && !slots.includes(S.hora)) S.hora = null;
+  el.innerHTML = `
+  <div class="card stack"><div class="step"><span>1</span><h3>Escolha o serviço</h3></div>
+    <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(x.preco)}</b></button>`).join('')}</div></div>
+  <div class="card stack ${s ? '' : 'dim'}"><div class="step"><span>2</span><h3>Escolha o dia</h3></div>
+    <div class="dstrip" id="dstrip">${dias.map(({ d, livres }) => { const x = parseYmd(d); return `<button class="dd ${d === S.dia ? 'on' : ''}" data-act="dia" data-d="${d}" ${livres ? '' : 'disabled'}>${DIAS[x.getDay()]}<b>${x.getDate()}</b>${x.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</button>`; }).join('')}</div></div>
+  <div class="card stack ${s && S.dia ? '' : 'dim'}"><div class="step"><span>3</span><h3>Escolha o horário</h3></div>
+    ${!S.dia ? '<p class="muted small">Escolha um dia para ver os horários.</p>' : slots.length ? `<div class="slots">${slots.map(h => `<button class="slot ${h === S.hora ? 'on' : ''}" data-act="hora" data-h="${h}">${h}</button>`).join('')}</div>` : '<p class="muted small">Sem horários livres nesse dia. Tente outro dia ou entre na lista de encaixe abaixo.</p>'}</div>`;
+  const form = $('#dados');
+  form.hidden = !(s && S.dia && S.hora);
+  if (!form.hidden){
+    $('#resumo').innerHTML = `<b>${esc(s.nome)}</b> · ${brl(s.preco)}<br><span class="muted">${dataLonga(S.dia)}</span> às <b>${S.hora}</b>`;
+  }
+  const on = $('#dstrip .dd.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+}
+
+$('#dados').addEventListener('submit', async e => {
+  e.preventDefault(); const f = e.target; const btn = $('#btnEnviar');
+  const nome = f.nome.value.trim(), tel = f.telefone.value.trim();
+  if (digits(tel).length < 10){ toast('Confira seu WhatsApp com DDD'); return; }
+  const s = servAtual(); const c = S.cfg;
+  if (!slotsDoDia(c, S.ocup, S.dia, Number(s.duracao), c.antecedenciaHoras).includes(S.hora)){ toast('Esse horário acabou de ser ocupado. Escolha outro.'); S.hora = null; renderPassos(); return; }
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  const id = uid(); const fim = toHM(toMin(S.hora) + Number(s.duracao));
+  const ag = { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao), preco: Number(s.preco), data: S.dia, ini: S.hora, fim, obs: f.obs.value.trim(), status: 'pendente', origem: 'link', criadoEm: Date.now() };
+  try {
+    await store.set('agendamentos', id, ag);
+    await store.set('ocupados', id, { data: S.dia, ini: S.hora, fim });
+  } catch (err) {
+    console.error(err); toast('Não consegui enviar. Tente de novo.'); btn.disabled = false; btn.textContent = 'Solicitar horário'; return;
+  }
+  salvarMe(nome, tel); lsSet('meusAgs', [id, ...meusIds()].slice(0, 20)); watchMeus();
+  btn.disabled = false; btn.textContent = 'Solicitar horário'; f.obs.value = '';
+  S.serv = null; S.dia = null; S.hora = null; renderPassos();
+  const w = c.whatsapp;
+  sheet(`<div class="stack center"><div class="ok">💅</div><h2>Pedido enviado!</h2>
+    <p class="muted">${esc(ag.servicoNome)}<br><span>${dataLonga(ag.data)}</span> às ${ag.ini}</p>
+    <p class="small">Seu horário está reservado. Assim que for confirmado, você recebe uma mensagem e vê em <b>Meus horários</b>.</p>
+    ${w ? `<a class="btn g block" target="_blank" rel="noopener" href="${waLink(w, `Oi! Acabei de pedir um horário pelo link 💅\n${ag.servicoNome} · ${dataLonga(ag.data)} às ${ag.ini}\nNome: ${ag.nome}`)}">Avisar no WhatsApp</a>` : ''}
+    <button class="btn p block" data-act="fechar">Ok</button></div>`);
+});
+
+function formEncaixe(){
+  const c = S.cfg || DEFAULT_CONFIG; const sv = c.servicos || []; const m = me();
+  const diasAtivos = [1, 2, 3, 4, 5, 6, 0].filter(d => c.horarios?.[d]?.ativo);
+  sheet(`<h2>Lista de encaixe</h2><p class="muted small mt">Se abrir uma vaga que combine com você, eu te chamo no WhatsApp.</p><form class="stack mt">
+    <div><label class="f">Seu nome</label><input name="nome" required value="${esc(m.nome || '')}"></div>
+    <div><label class="f">Seu WhatsApp com DDD</label><input name="telefone" inputmode="tel" required value="${esc(m.telefone || '')}" placeholder="(21) 99999-9999"></div>
+    <div><label class="f">Serviço</label><select name="servico">${sv.map(s => `<option value="${s.id}" ${s.id === S.serv ? 'selected' : ''}>${esc(s.nome)}</option>`).join('')}</select></div>
+    <div><label class="f">Dias que você pode (deixe sem marcar se for qualquer dia)</label><div class="seg">${diasAtivos.map(d => `<label><input type="checkbox" name="dias" value="${DIAS[d].toLowerCase()}"><span>${DIAS[d]}</span></label>`).join('')}</div></div>
+    <div><label class="f">Melhor período</label><select name="periodo"><option>qualquer horário</option><option>manhã</option><option>tarde</option><option>noite</option></select></div>
+    <div><label class="f">Observação (opcional)</label><input name="obs"></div>
+    <button class="btn p block">Entrar na lista</button>
+    <button type="button" class="btn block" data-act="fechar">Cancelar</button></form>`, sh => {
+    const f = sh.querySelector('form');
+    f.onsubmit = async e => {
+      e.preventDefault();
+      if (digits(f.telefone.value).length < 10){ toast('Confira seu WhatsApp com DDD'); return; }
+      const s = sv.find(x => x.id === f.servico.value) || {};
+      try {
+        await store.add('encaixes', { nome: f.nome.value.trim(), telefone: f.telefone.value.trim(), servicoId: s.id || '', servicoNome: s.nome || '', dias: [...f.querySelectorAll('[name=dias]:checked')].map(x => x.value), periodo: f.periodo.value, obs: f.obs.value.trim(), status: 'aguardando', origem: 'link', criadoEm: Date.now() });
+      } catch (err) { console.error(err); toast('Não consegui enviar. Tente de novo.'); return; }
+      salvarMe(f.nome.value.trim(), f.telefone.value.trim());
+      sheet(`<div class="stack center"><div class="ok">💕</div><h2>Você está na lista!</h2><p class="muted">Se abrir uma vaga, eu te chamo no WhatsApp.</p><button class="btn p block" data-act="fechar">Ok</button></div>`);
+    };
+  });
+}
+
+/* ================= MEUS HORÁRIOS ================= */
+const unsubMeus = {};
+function watchMeus(){
+  meusIds().forEach(id => {
+    if (unsubMeus[id]) return;
+    unsubMeus[id] = store.watchDoc('agendamentos', id, a => { S.meus[id] = a; if (S.tab === 'meus') renderMeus(); });
+  });
+}
+function renderMeus(){
+  const el = $('#v-meus'); const lista = Object.values(S.meus).filter(Boolean).sort((a, b) => (b.data + b.ini).localeCompare(a.data + a.ini));
+  const w = S.cfg?.whatsapp;
+  el.innerHTML = lista.length ? `<div class="card">${lista.map(a => `<div class="meu"><div><b>${esc(a.servicoNome)}</b><div class="muted small">${dataLonga(a.data)} às ${a.ini}</div></div><span class="chip ${a.status}">${LABEL[a.status] || a.status}</span></div>`).join('')}</div>
+    ${w ? `<a class="btn block" target="_blank" rel="noopener" href="${waLink(w, 'Oi! Preciso falar sobre meu horário.')}">Precisa remarcar ou cancelar? Fale no WhatsApp</a>` : ''}`
+    : `<div class="card center stack"><p class="muted">Você ainda não pediu horários por este aparelho.</p><button class="btn p" data-act="irAgendar">Agendar agora</button></div>`;
+}
+
+/* ================= CHAT ================= */
+let unsubMsgs = null, unsubConv = null;
+function abrirChatSeTiver(){
+  const id = lsGet('conversaId'); const m = me();
+  if (id && m.nome){ $('#chatIdent').hidden = true; $('#chatBox').hidden = false; ligarChat(id); }
+  else { const f = $('#chatIdent'); f.hidden = false; $('#chatBox').hidden = true; f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; }
+}
+function ligarChat(id){
+  if (unsubMsgs) { renderMsgs(); marcarLida(); return; }
+  unsubMsgs = store.watch(`conversas/${id}/msgs`, ms => { S.msgs = ms.sort((a, b) => (a.em || 0) - (b.em || 0)); renderMsgs(); marcarLida(); });
+}
+function marcarLida(){ const id = lsGet('conversaId'); if (S.tab === 'chat' && id && S.conv?.naoLidaCliente) store.set('conversas', id, { naoLidaCliente: false }); }
+function renderMsgs(){
+  const box = $('#msgs');
+  box.innerHTML = `<div class="msg">Oi! Pode mandar sua dúvida por aqui que eu respondo assim que puder 💬</div>` + S.msgs.map(m => `<div class="msg ${m.de === 'cliente' ? 'me' : ''}">${esc(m.texto)}<time>${hora(m.em)}</time></div>`).join('');
+  if (S.tab === 'chat') scrollTo(0, document.body.scrollHeight);
+}
+function vigiarConversa(){
+  const id = lsGet('conversaId'); if (!id || unsubConv) return;
+  unsubConv = store.watchDoc('conversas', id, c => { S.conv = c; $('#chatDot').hidden = !(c && c.naoLidaCliente && S.tab !== 'chat'); marcarLida(); });
+}
+$('#chatIdent').addEventListener('submit', e => {
+  e.preventDefault(); const f = e.target;
+  if (digits(f.telefone.value).length < 10){ toast('Confira seu WhatsApp com DDD'); return; }
+  salvarMe(f.nome.value.trim(), f.telefone.value.trim());
+  if (!lsGet('conversaId')) lsSet('conversaId', uid());
+  vigiarConversa(); abrirChatSeTiver();
+});
+$('#chatForm').addEventListener('submit', async e => {
+  e.preventDefault(); const inp = e.target.t; const t = inp.value.trim(); if (!t) return;
+  const id = lsGet('conversaId'); const m = me(); inp.value = '';
+  try {
+    await store.add(`conversas/${id}/msgs`, { de: 'cliente', texto: t, em: Date.now() });
+    await store.set('conversas', id, { nome: m.nome || 'Cliente', telefone: m.telefone || '', ultimaMsg: t, ultimaDe: 'cliente', atualizadoEm: Date.now(), naoLidaAdmin: true });
+  } catch (err) { console.error(err); toast('Mensagem não enviada. Tente de novo.'); inp.value = t; }
+});
+
+/* ================= CLIQUES ================= */
+const ACTS = {
+  fechar: () => closeSheet(),
+  serv: d => { S.serv = d.id; S.hora = null; renderPassos(); },
+  dia: d => { S.dia = d.d; S.hora = null; renderPassos(); },
+  hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
+  encaixe: () => formEncaixe(),
+  irAgendar: () => go('agendar')
+};
+document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault(); fn(t.dataset, t); });
+
+/* ================= INÍCIO ================= */
+S.tab = 'agendar';
+try { await initStore(); } catch (e) { console.error(e); $('#passos').innerHTML = '<div class="card center muted">Não consegui carregar a agenda agora. Tente de novo em instantes.</div>'; }
+if (DEMO || fb){
+  store.watchDoc('config', 'geral', c => {
+    S.cfg = c || (DEMO ? DEFAULT_CONFIG : null);
+    if (S.cfg){
+      $('#nome').textContent = S.cfg.nome; document.title = 'Agende seu horário · ' + S.cfg.nome;
+      $('#boas').textContent = S.cfg.boasVindas || '';
+      $('#foot').textContent = S.cfg.nome;
+      const w = S.cfg.whatsapp; const b = $('#btnWhats'); b.hidden = !w; if (w) b.href = waLink(w, 'Oi! Vim pelo link de agendamento 💅');
+    }
+    renderPassos();
+  });
+  store.watch('ocupados', os => { S.ocup = os; renderPassos(); });
+  watchMeus(); vigiarConversa();
+}
+</script>
+</body>
+</html>
