@@ -22,7 +22,7 @@ Enquanto o `config.js` estiver com `COLE_AQUI`, o app abre em **modo demonstraç
 2. Menu **Build → Authentication** → Começar → ative **E-mail/senha**.
 3. Na aba **Users** → **Adicionar usuário** com o e-mail e a senha da Júlia.
 4. Menu **Build → Firestore Database** → Criar banco → região `southamerica-east1 (São Paulo)` → modo de produção.
-5. Na aba **Regras**, apague tudo, cole o conteúdo de `firestore.rules`, troque `EMAIL-DA-JULIA@gmail.com` pelo e-mail dela e clique em **Publicar**.
+5. Na aba **Regras**, apague tudo, cole o conteúdo de `firestore.rules`, troque `juliamarcico@gmail.com` pelo e-mail dela e clique em **Publicar**.
 6. Engrenagem → **Configurações do projeto** → Seus apps → ícone **</>** (Web) → registre o app e copie o bloco `firebaseConfig`.
 
 ### 2. Preencher o config.js

@@ -6,7 +6,7 @@
 window.APP_CONFIG = {
   // E-mail que a Júlia vai usar para entrar no painel.
   // Tem que ser o MESMO e-mail colocado no arquivo firestore.rules.
-  adminEmail: "EMAIL-DA-JULIA@gmail.com",
+  adminEmail: "juliamarcico@gmail.com",
 
   // Cole aqui o bloco do Firebase:
   // Console do Firebase > Configurações do projeto > Seus apps > Web (</>)
