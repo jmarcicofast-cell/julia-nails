@@ -11,11 +11,11 @@ window.APP_CONFIG = {
   // Cole aqui o bloco do Firebase:
   // Console do Firebase > Configurações do projeto > Seus apps > Web (</>)
   firebase: {
-    apiKey: "COLE_AQUI",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyAEQL-exXPHGnB-OeCa8cFPXkxWO4_60tw",
+    authDomain: "julia-nails-fda89.firebaseapp.com",
+    projectId: "julia-nails-fda89",
+    storageBucket: "julia-nails-fda89.firebasestorage.app",
+    messagingSenderId: "593611612424",
+    appId: "1:593611612424:web:f5c2560a2ec2ded50fccbd"
   }
 };
