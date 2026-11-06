@@ -857,7 +857,7 @@ function renderAjustes(){
   <div class="card stack"><h3>Regras do link</h3>
     <div><label class="f">Horários de quantos em quantos minutos</label><select id="aj-int"><option value="servico" ${c.passoServico !== false ? 'selected' : ''}>Pela duração do serviço escolhido</option>${[15, 20, 30, 45, 60].map(n => `<option value="${n}" ${c.passoServico === false && Number(c.intervalo) === n ? 'selected' : ''}>A cada ${n} min</option>`).join('')}</select>
       <p class="muted small" style="margin-top:4px">Pela duração: Pé e mão (90 min) aparece 09:00, 10:30, 12:00… Mão (45 min) aparece 09:00, 09:45, 10:30…</p></div>
-    <div class="grid2"><div><label class="f">Antecedência mínima (h)</label><input id="aj-ant" type="number" min="0" value="${c.antecedenciaHoras}"></div><div><label class="f">Agenda aberta (dias)</label><input id="aj-dias" type="number" min="1" max="120" value="${c.diasAFrente}"></div></div></div>
+    <div class="grid2"><div><label class="f">Antecedência mínima (h)</label><input id="aj-ant" type="number" min="0" value="${c.antecedenciaHoras}"></div><div><label class="f">Agenda aberta (dias) · vai até o fim do mês</label><input id="aj-dias" type="number" min="1" max="120" value="${c.diasAFrente}"></div></div></div>
   <div class="card stack"><h3>🎄 Natal e entrada (Pix ou cartão)</h3>
     <label class="tg"><input type="checkbox" id="aj-natal" ${N.natal(c).ativo ? 'checked' : ''}>Modo Natal (visual natalino e reajuste)</label>
     <div class="grid2"><div><label class="f">Reajuste natalino por serviço (R$)</label><input id="aj-adic" inputmode="decimal" value="${String(N.natal(c).adicional).replace('.', ',')}"></div><div><label class="f">Título no link</label><input id="aj-titulo" value="${esc(N.natal(c).titulo)}"></div></div>

@@ -449,7 +449,9 @@ function renderRegras(){
 /* ================= AGENDAR ================= */
 function diasDisponiveis(){
   const c = S.cfg; const n = Number(c.diasAFrente) || 30; const out = []; const t = new Date();
-  for (let i = 0; i < n; i++){ const d = new Date(t); d.setDate(t.getDate() + i); out.push(ymd(d)); }
+  // vai até o fim do mês do último dia aberto (ex.: 30 dias a partir de 06/11 → mostra dezembro inteiro)
+  const ult = new Date(t); ult.setDate(t.getDate() + n - 1); const fimMes = new Date(ult.getFullYear(), ult.getMonth() + 1, 0);
+  for (const d = new Date(t.getFullYear(), t.getMonth(), t.getDate()); d <= fimMes; d.setDate(d.getDate() + 1)) out.push(ymd(d));
   return out;
 }
 function calendario(dias){
