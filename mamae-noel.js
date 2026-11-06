@@ -1,7 +1,7 @@
 // Júlia de Mamãe Noel — ilustrações animadas (SVG) do modo Natal.
 // Para mudar cabelo/pele, troque as cores em CORES.
 (function () {
-  const CORES = { pele: '#f2c4a2', pele2: '#e3a987', cabelo: '#5a3220', cabelo2: '#3f2215', roupa: '#c8202c', roupa2: '#9b1620', pelo: '#fffaf2', ouro: '#e2bd6b', unha: '#c8202c' };
+  const CORES = { pele: '#dba57f', pele2: '#c58763', cabelo: '#6e3d1e', cabelo2: '#4a2611', mecha: '#c48a4a', roupa: '#c8202c', roupa2: '#9b1620', pelo: '#fffaf2', ouro: '#e2bd6b', unha: '#c8202c' };
   const c = CORES;
 
   const css = `
@@ -28,21 +28,30 @@
   `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
+  // cachos: bolinhas sobrepostas com mechas douradas, até os ombros
+  const cachos = (pts, r, cor) => pts.map(([x, y], k) => `<circle cx="${x}" cy="${y}" r="${r + (k % 3) - 1}" fill="${cor}"/>`).join('');
+  const ladoE = [[50,64],[44,76],[42,90],[44,104],[48,116],[54,126],[40,112],[46,130]];
+  const ladoD = ladoE.map(([x, y]) => [160 - x, y]);
+  const topo = [[56,52],[66,46],[78,44],[90,45],[102,50],[110,58]];
   const cabeca = (sorriso) => `
-    <path d="M44 74c-6 22-4 52 6 70 8-6 12-30 12-30z" fill="${c.cabelo2}"/>
-    <path d="M116 74c6 22 4 52-6 70-8-6-12-30-12-30z" fill="${c.cabelo2}"/>
-    <ellipse cx="80" cy="76" rx="30" ry="33" fill="${c.pele}"/>
-    <path d="M50 70c4-22 22-30 34-28 16 2 26 12 27 28-14-2-28-10-34-18-6 10-16 16-27 18z" fill="${c.cabelo}"/>
-    <ellipse cx="68" cy="78" rx="3.2" ry="4.2" fill="#2b1a14" class="olho"/>
-    <ellipse cx="92" cy="78" rx="3.2" ry="4.2" fill="#2b1a14" class="olho"/>
-    <path d="M62 70q6-4 11 0M87 70q6-4 11 0" stroke="${c.cabelo2}" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <circle cx="61" cy="89" r="5" fill="#f08f8f" opacity=".55"/><circle cx="99" cy="89" r="5" fill="#f08f8f" opacity=".55"/>
+    <g>${cachos(ladoE, 10, c.cabelo2)}${cachos(ladoD, 10, c.cabelo2)}</g>
+    <g>${cachos(ladoE.map(([x, y]) => [x + 3, y - 2]), 7, c.cabelo)}${cachos(ladoD.map(([x, y]) => [x - 3, y - 2]), 7, c.cabelo)}</g>
+    <ellipse cx="80" cy="78" rx="27" ry="31" fill="${c.pele}"/>
+    <g>${cachos(topo, 9, c.cabelo)}</g>
+    <g stroke="${c.mecha}" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".95">${[[44,74],[40,100],[50,122],[116,74],[120,100],[110,122],[64,46],[92,44]].map(([x, y]) => `<path d="M${x - 4} ${y + 2}q4-6 8 0"/>`).join('')}</g>
+    <path d="M60 72q7-5 14-1M86 71q7-4 14 1" stroke="#3a1d10" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <g class="olho"><ellipse cx="68" cy="80" rx="3.4" ry="4.2" fill="#2b1a14"/><circle cx="69.2" cy="78.6" r="1.1" fill="#fff"/></g>
+    <g class="olho"><ellipse cx="92" cy="80" rx="3.4" ry="4.2" fill="#2b1a14"/><circle cx="93.2" cy="78.6" r="1.1" fill="#fff"/></g>
+    <path d="M63.5 76.5l-2.5-2M96.5 76.5l2.5-2" stroke="#2b1a14" stroke-width="1.4" stroke-linecap="round"/>
+    <circle cx="61" cy="91" r="5" fill="#e0726f" opacity=".45"/><circle cx="99" cy="91" r="5" fill="#e0726f" opacity=".45"/>
     ${sorriso}
     <!-- gorro -->
-    <path d="M48 58c4-26 34-38 58-26 12 6 22 0 28-2-2 10-10 18-22 22z" fill="${c.roupa}"/>
+    <path d="M50 58c4-26 34-38 58-26 12 6 22 0 28-2-2 10-10 18-22 22z" fill="${c.roupa}"/>
     <path d="M104 34c10-4 22-6 30-4" stroke="${c.roupa2}" stroke-width="3" fill="none"/>
-    <rect x="44" y="52" width="74" height="13" rx="6.5" fill="${c.pelo}" stroke="#e2cfb4" stroke-width="1.4" transform="rotate(-6 81 58)"/>
+    <rect x="46" y="52" width="72" height="13" rx="6.5" fill="${c.pelo}" stroke="#e2cfb4" stroke-width="1.4" transform="rotate(-6 81 58)"/>
     <g class="pompom"><circle cx="136" cy="32" r="8" fill="${c.pelo}" stroke="#e2cfb4" stroke-width="1.4"/></g>`;
+  const boca = '<path d="M71 95q9 3 18 0q-1 7-9 7t-9-7z" fill="#b51f2b"/><path d="M73 95.6q7 1.6 14 0" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+  const colar = `<path d="M70 108q10 8 20 0" stroke="${c.ouro}" stroke-width="1.4" fill="none"/><path d="M80 114l-2.4-2.4a1.7 1.7 0 0 1 2.4-2.4 1.7 1.7 0 0 1 2.4 2.4z" fill="${c.ouro}"/>`;
 
   const vestido = `
     <path d="M58 116c-12 24-20 52-22 74h88c-2-22-10-50-22-74z" fill="${c.roupa}"/>
@@ -50,7 +59,7 @@
     <rect x="44" y="140" width="72" height="9" fill="#2b1a14"/>
     <rect x="73" y="138" width="14" height="13" rx="2" fill="none" stroke="${c.ouro}" stroke-width="3"/>
     <path d="M60 110h40c4 0 8 4 8 8H52c0-4 4-8 8-8z" fill="${c.pelo}" stroke="#e2cfb4" stroke-width="1.4"/>
-    <rect x="73" y="104" width="14" height="8" fill="${c.pele}"/>`;
+    <rect x="73" y="104" width="14" height="8" fill="${c.pele}"/>${colar}`;
 
   const bracoEsq = `
     <path d="M60 118c-10 8-16 22-16 34" stroke="${c.roupa}" stroke-width="13" fill="none" stroke-linecap="round"/>
@@ -73,18 +82,18 @@
   const svg = (cls, inner) => `<svg class="mn ${cls}" viewBox="0 0 160 200" role="img" aria-label="Júlia vestida de Mamãe Noel">${inner}</svg>`;
 
   // 1) Acenando com o esmalte (topo do link)
-  const acenando = () => svg('mn-hero', `<g class="corpo">${vestido}${bracoEsq}${bracoAceno}${cabeca('<path d="M70 94q10 9 20 0" stroke="#8a2e2e" stroke-width="2.6" fill="#fff" stroke-linecap="round"/>')}</g>`);
+  const acenando = () => svg('mn-hero', `<g class="corpo">${vestido}${bracoEsq}${cabeca(boca)}${bracoAceno}</g>`);
 
   // 2) Comemorando e mandando beijo (horário pedido)
   const comemorando = () => svg('mn-ok', `<g class="pulo">${vestido}
+      ${cabeca('<ellipse cx="80" cy="98" rx="4.2" ry="4.6" fill="#b51f2b"/>')}
       <path d="M60 118c-10-6-18-20-20-36" stroke="${c.roupa}" stroke-width="13" fill="none" stroke-linecap="round"/><circle cx="39" cy="74" r="8" fill="${c.pele}"/>
-      <path d="M100 118c10-6 18-20 20-36" stroke="${c.roupa}" stroke-width="13" fill="none" stroke-linecap="round"/><circle cx="121" cy="74" r="8" fill="${c.pele}"/>
-      ${cabeca('<ellipse cx="80" cy="96" rx="4" ry="4.5" fill="#b8323a"/>')}</g>
+      <path d="M100 118c10-6 18-20 20-36" stroke="${c.roupa}" stroke-width="13" fill="none" stroke-linecap="round"/><circle cx="121" cy="74" r="8" fill="${c.pele}"/></g>
       <text x="100" y="96" font-size="14" class="beijo">💋</text><text x="104" y="92" font-size="12" class="beijo b2">❤️</text>
       <text x="22" y="40" font-size="12" class="brilho" fill="${c.ouro}">✦</text><text x="128" y="120" font-size="10" class="brilho" fill="${c.ouro}" style="animation-delay:.8s">✦</text>`);
 
   // 3) Mini, só o rosto (avisos)
-  const mini = () => `<svg class="mn mn-mini" viewBox="40 20 110 100" aria-hidden="true"><g class="corpo">${cabeca('<path d="M72 94q8 7 16 0" stroke="#8a2e2e" stroke-width="2.6" fill="none" stroke-linecap="round"/>')}</g></svg>`;
+  const mini = () => `<svg class="mn mn-mini" viewBox="28 20 120 118" aria-hidden="true"><g class="corpo">${cabeca(boca)}</g></svg>`;
 
   window.MamaeNoel = { acenando, comemorando, mini };
 })();

@@ -358,17 +358,29 @@ const DEFAULT_CONFIG = {
   servicos: [ { id:'s1',nome:'Mão',duracao:45,preco:35 }, { id:'s2',nome:'Pé',duracao:45,preco:40 }, { id:'s3',nome:'Pé e mão',duracao:90,preco:70 }, { id:'s4',nome:'Esmaltação em gel',duracao:60,preco:60 }, { id:'s5',nome:'Alongamento em gel',duracao:120,preco:150 }, { id:'s6',nome:'Manutenção do alongamento',duracao:90,preco:100 } ]
 };
 
+/** Expediente do dia: dia extra aberto > folga > horário da semana */
+function expediente(cfg, dataStr){
+  const ex = (cfg.extras || []).find(x => x.startsWith(dataStr + ' '));
+  if (ex){ const [a, b] = ex.slice(11).split('-'); return { ativo: true, ini: a, fim: b, pIni: '', pFim: '', extra: true }; }
+  if ((cfg.bloqueios || []).includes(dataStr)) return null;
+  const h = cfg.horarios?.[parseYmd(dataStr).getDay()];
+  return h && h.ativo ? h : null;
+}
+/** Horários travados pela Júlia nesse dia: [[ini, fim], …] em minutos */
+function travasDoDia(cfg, dataStr){
+  return (cfg.travas || []).filter(x => x.startsWith(dataStr + ' ')).map(x => x.slice(11).split('-').map(toMin));
+}
 function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
   if (!cfg || !dataStr) return [];
-  const d = parseYmd(dataStr); const h = cfg.horarios?.[d.getDay()];
-  if (!h || !h.ativo || (cfg.bloqueios || []).includes(dataStr)) return [];
+  const d = parseYmd(dataStr); const h = expediente(cfg, dataStr);
+  if (!h) return [];
   const ini = toMin(h.ini), fim = toMin(h.fim), step = Number(cfg.intervalo) || 30;
   const porServico = cfg.passoServico !== false;
   const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
   const occ = ocupados.filter(o => o.data === dataStr).map(o => [toMin(o.ini), toMin(o.fim)]);
   const limite = Date.now() + (Number(antecH) || 0) * 3600e3;
   const out = [];
-  const blocos = (pI != null ? [[pI, pF]] : []).concat(occ);
+  const blocos = (pI != null ? [[pI, pF]] : []).concat(occ, travasDoDia(cfg, dataStr));
   if (porServico){
     // Horários seguidos pela duração do serviço: 09:00, 10:30, 12:00… (Pé e mão, 90 min).
     // Se esbarrar numa pausa ou atendimento, recomeça logo depois dele.

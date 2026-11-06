@@ -109,6 +109,25 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--rose
 .slot{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:7px 10px;font:600 13px Manrope,sans-serif;color:var(--ink);cursor:pointer}
 .slot.on{background:var(--rose);color:var(--rose-ink);border-color:var(--rose)}
 .slot.ro{cursor:default}
+.tg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tc{border:1px solid var(--line);background:var(--card);border-radius:11px;padding:8px 2px 6px;font:700 13px Manrope,sans-serif;color:var(--ink);cursor:pointer;text-align:center;line-height:1.15}
+.tc small{display:block;font-size:10px;font-weight:600;color:var(--green);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.tc.trava{background:var(--red-soft);border-color:transparent;color:var(--red)}
+.tc.trava small{color:var(--red)}
+.tc.ag{background:#e3ecfb;border-color:transparent;color:#2f5aa8;cursor:default}
+.tc.ag small{color:#2f5aa8}
+@media (prefers-color-scheme:dark){.tc.ag{background:#1f2a40;color:#9db8ea}.tc.ag small{color:#9db8ea}}
+.tc.pausa{background:var(--line);border-color:transparent;color:var(--muted);cursor:default}
+.tc.pausa small{color:var(--muted)}
+.tc.passou{opacity:.4}
+.tleg{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;color:var(--muted)}
+.tleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.trv-h{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none}
+.trv-h::-webkit-details-marker{display:none}
+.trv-h .st{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px}
+.trv-h .st.ab{background:var(--green-soft);color:var(--green)}
+.trv-h .st.fe{background:var(--red-soft);color:var(--red)}
+.qk{display:flex;flex-wrap:wrap;gap:6px}
 .note{background:var(--rose-soft);color:var(--rose);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600}
 /* finance */
 .mnav{display:flex;align-items:center;justify-content:space-between}
@@ -322,18 +341,30 @@ const DEFAULT_CONFIG = {
   ]
 };
 
+/** Expediente do dia: dia extra aberto > folga > horário da semana */
+function expediente(cfg, dataStr){
+  const ex = (cfg.extras || []).find(x => x.startsWith(dataStr + ' '));
+  if (ex){ const [a, b] = ex.slice(11).split('-'); return { ativo: true, ini: a, fim: b, pIni: '', pFim: '', extra: true }; }
+  if ((cfg.bloqueios || []).includes(dataStr)) return null;
+  const h = cfg.horarios?.[parseYmd(dataStr).getDay()];
+  return h && h.ativo ? h : null;
+}
+/** Horários travados pela Júlia nesse dia: [[ini, fim], …] em minutos */
+function travasDoDia(cfg, dataStr){
+  return (cfg.travas || []).filter(x => x.startsWith(dataStr + ' ')).map(x => x.slice(11).split('-').map(toMin));
+}
 /** Horários livres de um dia para um serviço de `dur` minutos */
 function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
   if (!cfg || !dataStr) return [];
-  const d = parseYmd(dataStr); const h = cfg.horarios?.[d.getDay()];
-  if (!h || !h.ativo || (cfg.bloqueios || []).includes(dataStr)) return [];
+  const d = parseYmd(dataStr); const h = expediente(cfg, dataStr);
+  if (!h) return [];
   const ini = toMin(h.ini), fim = toMin(h.fim), step = Number(cfg.intervalo) || 30;
   const porServico = cfg.passoServico !== false;
   const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
   const occ = ocupados.filter(o => o.data === dataStr).map(o => [toMin(o.ini), toMin(o.fim)]);
   const limite = Date.now() + (Number(antecH) || 0) * 3600e3;
   const out = [];
-  const blocos = (pI != null ? [[pI, pF]] : []).concat(occ);
+  const blocos = (pI != null ? [[pI, pF]] : []).concat(occ, travasDoDia(cfg, dataStr));
   if (porServico){
     // Horários seguidos pela duração do serviço: 09:00, 10:30, 12:00… (Pé e mão, 90 min).
     // Se esbarrar numa pausa ou atendimento, recomeça logo depois dele.
@@ -457,6 +488,74 @@ function cardAg(a){
     ${a.entrada && a.status !== 'concluido' ? `<div class="mt">${chipEntrada(a)}</div>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}</div></div>`;
 }
+/* ===== LIBERAR E BLOQUEAR HORÁRIOS ===== */
+const hojeYmd = () => ymd(new Date());
+const limpaVelhos = arr => (arr || []).filter(x => x.slice(0, 10) >= hojeYmd());
+async function salvarAgendaCfg(patch){
+  S.cfg = { ...C(), ...patch }; render();
+  try { await store.set('config', 'geral', patch); } catch (e) { console.error(e); toast('Não consegui salvar. Tente de novo.'); }
+}
+function celulasDoDia(sel){
+  const c = C(); const h = expediente(c, sel); if (!h) return [];
+  const passo = 30; const ini = toMin(h.ini), fim = toMin(h.fim);
+  const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
+  const tr = travasDoDia(c, sel);
+  const ags = agsAtivos().filter(a => a.data === sel);
+  const agora = sel === hojeYmd() ? new Date().getHours() * 60 + new Date().getMinutes() : (sel < hojeYmd() ? 1e9 : -1);
+  const out = [];
+  for (let t = ini; t < fim; t += passo){
+    const e = Math.min(t + passo, fim);
+    const ag = ags.find(a => t < toMin(a.fim) && e > toMin(a.ini));
+    const est = ag ? 'ag' : (pI != null && t < pF && e > pI) ? 'pausa' : tr.some(([a, b]) => t < b && e > a) ? 'trava' : 'livre';
+    out.push({ t, e, est, nome: ag ? pn(ag.nome) : '', passou: e <= agora });
+  }
+  return out;
+}
+function painelHorarios(sel){
+  const c = C(); const h = expediente(c, sel); const base = parseYmd(sel);
+  const semana = c.horarios?.[base.getDay()]; const folga = (c.bloqueios || []).includes(sel);
+  const aberto = S.trvAberto !== false;
+  if (!h){
+    const motivo = folga ? 'Você bloqueou este dia (folga).' : 'Você não atende neste dia da semana.';
+    return `<details class="card stack" ${aberto ? 'open' : ''} id="trv"><summary class="trv-h"><h3>🔒 Liberar e bloquear horários</h3><span class="st fe">Dia fechado</span></summary>
+      <p class="muted small">${motivo} O link não mostra horários neste dia.</p>
+      <div class="qk">${folga && semana?.ativo ? `<button class="btn g s" data-act="tvReabrir">Reabrir o dia (${semana.ini}–${semana.fim})</button>` : ''}
+      <button class="btn ${folga && semana?.ativo ? '' : 'g'} s" data-act="tvExtra">Abrir com outro horário…</button></div></details>`;
+  }
+  const cel = celulasDoDia(sel); const livres = cel.filter(x => x.est === 'livre').length; const trav = cel.filter(x => x.est === 'trava').length;
+  return `<details class="card stack" ${aberto ? 'open' : ''} id="trv"><summary class="trv-h"><h3>🔒 Liberar e bloquear horários</h3><span class="st ab">${h.ini}–${h.fim}${h.extra ? ' · extra' : ''}</span></summary>
+    <p class="muted small">Toque num horário para <b>bloquear</b> (fica vermelho) e toque de novo para <b>liberar</b>. Salva na hora e o link já atualiza.</p>
+    <div class="tg-grid">${cel.map(x => `<button class="tc ${x.est} ${x.passou ? 'passou' : ''}" ${x.est === 'livre' || x.est === 'trava' ? `data-act="tvCel" data-t="${x.t}" data-e="${x.e}"` : 'disabled'}>${toHM(x.t)}<small>${x.est === 'ag' ? esc(x.nome) : x.est === 'pausa' ? 'pausa' : x.est === 'trava' ? 'bloqueado' : 'livre'}</small></button>`).join('')}</div>
+    <div class="tleg"><span><i style="background:var(--card);border:1px solid var(--line)"></i>livre</span><span><i style="background:var(--red-soft)"></i>bloqueado</span><span><i style="background:#e3ecfb"></i>cliente</span><span><i style="background:var(--line)"></i>pausa</span></div>
+    <div class="muted small">${livres} livre${livres === 1 ? '' : 's'} · ${trav} bloqueado${trav === 1 ? '' : 's'}</div>
+    <div class="qk"><button class="btn s" data-act="tvFaixa" data-f="manha">Bloquear manhã</button><button class="btn s" data-act="tvFaixa" data-f="tarde">Bloquear tarde</button>
+      ${trav ? '<button class="btn g s" data-act="tvLiberarTudo">Liberar tudo</button>' : ''}
+      <button class="btn r s" data-act="tvFechar">Fechar o dia</button>
+      ${h.extra ? '' : '<button class="btn s ghost" data-act="tvExtra">Mudar horário do dia…</button>'}</div></details>`;
+}
+function formExtra(sel){
+  const h = expediente(C(), sel) || C().horarios?.[parseYmd(sel).getDay()] || {};
+  sheet(`<h2>Horário de ${esc(dataLonga(sel))}</h2><p class="muted small mt">Só para este dia. Os outros dias continuam com o horário de sempre.</p><form class="mt">
+    <div class="grid2 field"><div><label class="f">Abre às</label><input type="time" name="ini" required value="${h.ini || '09:00'}"></div><div><label class="f">Fecha às</label><input type="time" name="fim" required value="${h.fim || '18:00'}"></div></div>
+    <div class="row mt"><button type="button" class="btn" data-act="fechar">Cancelar</button><button class="btn p grow">Abrir neste horário</button></div></form>`, sh => {
+    const f = sh.querySelector('form');
+    f.onsubmit = async e => { e.preventDefault(); if (toMin(f.fim.value) <= toMin(f.ini.value)) { toast('O fim precisa ser depois do início'); return; }
+      const c = C(); closeSheet();
+      await salvarAgendaCfg({ extras: limpaVelhos((c.extras || []).filter(x => !x.startsWith(sel + ' '))).concat(`${sel} ${f.ini.value}-${f.fim.value}`), bloqueios: (c.bloqueios || []).filter(b => b !== sel) });
+      toast('Dia aberto no link ✓'); };
+  });
+}
+function travaToggle(sel, t, e){
+  const c = C(); const k = `${sel} ${toHM(t)}-${toHM(e)}`; let tr = limpaVelhos(c.travas);
+  const bate = tr.filter(x => x.startsWith(sel + ' ') && (([a, b]) => t < b && e > a)(x.slice(11).split('-').map(toMin)));
+  if (bate.length){
+    // libera: tira só este pedaço dos bloqueios que encostam nele
+    tr = tr.filter(x => !bate.includes(x));
+    bate.forEach(x => { const [a, b] = x.slice(11).split('-').map(toMin); if (a < t) tr.push(`${sel} ${toHM(a)}-${toHM(t)}`); if (b > e) tr.push(`${sel} ${toHM(e)}-${toHM(b)}`); });
+  } else tr.push(k);
+  return salvarAgendaCfg({ travas: tr });
+}
+
 function renderAgenda(){
   const el = $('#v-agenda'); const sel = S.sel; const hoje = ymd(new Date());
   const pend = S.ags.filter(a => a.status === 'pendente').sort(byDT);
@@ -470,8 +569,6 @@ function renderAgenda(){
   const doDia = S.ags.filter(a => a.data === sel && a.status !== 'recusado').sort(byDT);
   const validos = doDia.filter(a => a.status !== 'cancelado' && a.status !== 'falta');
   const previsto = validos.reduce((s, a) => s + (Number(a.status === 'concluido' ? a.valorPago : a.preco) || 0), 0);
-  const h = C().horarios?.[base.getDay()];
-  const fechado = !h || !h.ativo || (C().bloqueios || []).includes(sel);
   const mesAno = base.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   el.innerHTML = `
     ${pend.length ? `<div class="card pend"><div class="row between"><h3>Pedidos para aprovar</h3><span class="chip pendente">${pend.length}</span></div>
@@ -483,9 +580,10 @@ function renderAgenda(){
       ${sel !== hoje ? `<button class="btn s" data-act="dia" data-d="${hoje}">Hoje</button>` : ''}</div>
     <div class="days">${days}</div>
     <div class="row between"><h3 class="cap">${dataLonga(sel)}</h3><span class="muted small">${validos.length} atend. · ${brl(previsto)}</span></div>
-    ${fechado ? '<div class="note">Dia fechado na sua agenda — o link não mostra horários neste dia.</div>' : ''}
+    ${painelHorarios(sel)}
     ${doDia.length ? doDia.map(cardAg).join('') : `<div class="card empty">Nenhum horário marcado.<div class="mt"><button class="btn p s" data-act="novo">+ Marcar horário</button></div></div>`}
     <button class="fab" data-act="novo" aria-label="Novo horário">+</button>`;
+  const dt = $('#trv'); if (dt) dt.ontoggle = () => { S.trvAberto = dt.open; };
 }
 
 function formAgendamento(pre = {}){
@@ -716,6 +814,28 @@ function abrirChat(id){
 function fecharChat(){ S.chat = null; unsubMsgs && unsubMsgs(); unsubMsgs = null; }
 
 /* ---------- Ajustes ---------- */
+function juntaFaixas(lista){
+  const fx = lista.map(r => r.split('-').map(toMin)).sort((a, b) => a[0] - b[0]); const out = [];
+  fx.forEach(([a, b]) => { const u = out[out.length - 1]; if (u && a <= u[1]) u[1] = Math.max(u[1], b); else out.push([a, b]); });
+  return out.map(([a, b]) => `${toHM(a)}–${toHM(b)}`).join(', ');
+}
+function cardBloqueios(){
+  const c = C(); const hj = hojeYmd();
+  const folgas = (c.bloqueios || []).filter(b => b >= hj).sort();
+  const extras = (c.extras || []).filter(x => x.slice(0, 10) >= hj).sort();
+  const porDia = {}; (c.travas || []).filter(x => x.slice(0, 10) >= hj).forEach(x => { (porDia[x.slice(0, 10)] ||= []).push(x.slice(11)); });
+  // junta folgas seguidas em períodos (ex.: férias)
+  const per = []; folgas.forEach(d => { const u = per[per.length - 1]; const ant = parseYmd(d); ant.setDate(ant.getDate() - 1); if (u && u.ate === ymd(ant)) { u.ate = d; u.dias.push(d); } else per.push({ de: d, ate: d, dias: [d] }); });
+  const linha = (txt, sub, acts) => `<div class="row between" style="flex-wrap:nowrap;padding:8px 0;border-top:1px solid var(--line)"><div><b class="small">${txt}</b>${sub ? `<div class="muted small">${sub}</div>` : ''}</div><div class="row" style="flex-wrap:nowrap">${acts}</div></div>`;
+  return `<div class="card stack"><h3>🔒 Folgas, férias e horários bloqueados</h3>
+    <p class="muted small">Para bloquear ou liberar <b>horários</b> de um dia, abra o dia na <b>Agenda</b>. Aqui você bloqueia dias inteiros, inclusive um período de férias. Salva na hora.</p>
+    <div class="grid2"><div><label class="f">De</label><input type="date" id="bqDe" min="${hj}"></div><div><label class="f">Até (opcional)</label><input type="date" id="bqAte" min="${hj}"></div></div>
+    <button class="btn s" data-act="bqPeriodo" style="align-self:flex-start">Bloquear dia(s)</button>
+    <div>${per.map(p => linha(p.de === p.ate ? `Folga · ${fmtCurto(p.de)}` : `Folga · ${fmtCurto(p.de)} até ${fmtCurto(p.ate)}`, p.dias.length > 1 ? `${p.dias.length} dias` : '', p.dias.length === 1 ? `<button class="btn g s" data-act="bqTirar" data-k="b" data-v="${p.de}">Liberar</button>` : `<button class="btn g s" data-act="bqPeriodoTirar" data-de="${p.de}" data-ate="${p.ate}">Liberar</button>`)).join('')}
+    ${extras.map(x => linha(`Dia extra · ${fmtCurto(x.slice(0, 10))}`, `aberto ${x.slice(11).replace('-', '–')}`, `<button class="btn s ghost" data-act="bqVer" data-v="${x.slice(0, 10)}">Ver</button><button class="btn r s" data-act="bqTirar" data-k="e" data-v="${x}">Tirar</button>`)).join('')}
+    ${Object.keys(porDia).sort().map(d => linha(`Horários bloqueados · ${fmtCurto(d)}`, juntaFaixas(porDia[d]), `<button class="btn s ghost" data-act="bqVer" data-v="${d}">Ver</button><button class="btn g s" data-act="bqTirar" data-k="t" data-v="${d}">Liberar</button>`)).join('')}
+    ${!per.length && !extras.length && !Object.keys(porDia).length ? '<p class="muted small" style="border-top:1px solid var(--line);padding-top:8px">Nada bloqueado. Todos os dias seguem o horário de atendimento.</p>' : ''}</div></div>`;
+}
 function renderAjustes(){
   const c = S.draft; const link = linkCliente();
   $('#v-ajustes').innerHTML = `
@@ -758,9 +878,7 @@ function renderAjustes(){
     <div><label class="f">Prêmios (um por linha: estrelas | prêmio)</label><textarea id="aj-cat" rows="6">${esc(R.cfgDe(c).catalogo.map(x => `${x.custo} | ${x.nome}`).join('\n'))}</textarea></div>
     <p class="muted small">A cliente acumula estrelas a cada atendimento concluído, ganha emblemas e escolhe o prêmio ao agendar. Você confirma o uso no "Finalizar e receber". Prêmio com "R$ de desconto" já abate do valor.</p>
     ${S.perfisErr ? '<div class="note">Para o perfil aparecer para as clientes, publique as regras novas do arquivo firestore.rules no Firebase (Firestore › Regras).</div>' : ''}</div>
-  <div class="card stack"><h3>Folgas e dias bloqueados</h3>
-    <div class="row" style="flex-wrap:nowrap"><input type="date" id="novoBloq"><button class="btn s" data-act="addBloq">Bloquear</button></div>
-    <div class="chips">${(c.bloqueios || []).slice().sort().map(b => `<span class="chip">${fmtCurto(b)}<button data-act="delBloq" data-b="${b}" aria-label="Desbloquear">×</button></span>`).join('') || '<span class="muted small">Nenhum dia bloqueado.</span>'}</div></div>
+  ${cardBloqueios()}
   <button class="btn p block" data-act="salvarAjustes">Salvar ajustes</button>
   <div class="card stack"><h3>Avisos no celular</h3><p class="muted small">Receber aviso quando chegar pedido de horário ou mensagem (com o app aberto em segundo plano).</p><button class="btn s" data-act="notif">Ativar avisos</button></div>
   ${DEMO ? '<button class="btn block" data-act="limparDemo">Apagar dados de demonstração</button>' : '<button class="btn r block" data-act="sair">Sair da conta</button>'}`;
@@ -840,11 +958,46 @@ const ACTS = {
   copiarLink: () => { const l = linkCliente(); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(() => toast('Link copiado 💅')).catch(() => prompt('Copie o link:', l)); },
   addServ: () => { lerAjustes(); S.draft.servicos.push({ id: uid(), nome: '', duracao: 60, preco: 0 }); renderAjustes(); },
   delServ: d => { lerAjustes(); S.draft.servicos.splice(Number(d.i), 1); renderAjustes(); },
+  tvCel: d => travaToggle(S.sel, Number(d.t), Number(d.e)),
+  tvFaixa: async d => {
+    const sel = S.sel; const cel = celulasDoDia(sel).filter(x => x.est === 'livre' && (d.f === 'manha' ? x.t < 720 : x.t >= 720));
+    if (!cel.length) { toast('Nada livre nesse período'); return; }
+    await salvarAgendaCfg({ travas: limpaVelhos(C().travas).concat(cel.map(x => `${sel} ${toHM(x.t)}-${toHM(x.e)}`)) });
+    toast(`${d.f === 'manha' ? 'Manhã' : 'Tarde'} bloqueada ✓`);
+  },
+  tvLiberarTudo: async () => { const sel = S.sel; await salvarAgendaCfg({ travas: limpaVelhos(C().travas).filter(x => !x.startsWith(sel + ' ')) }); toast('Horários liberados ✓'); },
+  tvFechar: async () => {
+    const sel = S.sel; const c = C(); const n = agsAtivos().filter(a => a.data === sel).length;
+    if (n && !confirm(`Você tem ${n} cliente${n > 1 ? 's' : ''} marcada${n > 1 ? 's' : ''} nesse dia. Fechar o dia mesmo assim? (os horários delas continuam marcados)`)) return;
+    const ehExtra = (c.extras || []).some(x => x.startsWith(sel + ' ')); const semana = c.horarios?.[parseYmd(sel).getDay()];
+    const patch = { extras: limpaVelhos((c.extras || []).filter(x => !x.startsWith(sel + ' '))) };
+    if (!ehExtra || semana?.ativo) patch.bloqueios = [...new Set([...(c.bloqueios || []).filter(b => b >= hojeYmd()), sel])];
+    await salvarAgendaCfg(patch); toast('Dia fechado no link ✓');
+  },
+  tvReabrir: async () => { const sel = S.sel; await salvarAgendaCfg({ bloqueios: (C().bloqueios || []).filter(b => b !== sel) }); toast('Dia reaberto ✓'); },
+  tvExtra: () => formExtra(S.sel),
+  bqPeriodo: async () => {
+    lerAjustes();
+    const a = $('#bqDe').value, b = $('#bqAte').value || a; if (!a) { toast('Escolha a data'); return; }
+    if (b < a) { toast('A data final precisa ser depois da inicial'); return; }
+    const dias = []; for (let d = parseYmd(a); ymd(d) <= b; d.setDate(d.getDate() + 1)) dias.push(ymd(d));
+    if (dias.length > 120) { toast('Período grande demais'); return; }
+    const c = C(); await salvarAgendaCfg({ bloqueios: [...new Set([...(c.bloqueios || []).filter(x => x >= hojeYmd()), ...dias])], extras: limpaVelhos((c.extras || []).filter(x => !dias.includes(x.slice(0, 10)))) });
+    S.draft.bloqueios = C().bloqueios; renderAjustes(); toast(dias.length > 1 ? `${dias.length} dias bloqueados ✓` : 'Dia bloqueado ✓');
+  },
+  bqTirar: async d => {
+    lerAjustes();
+    const c = C(); const patch = d.k === 'b' ? { bloqueios: (c.bloqueios || []).filter(x => x !== d.v) } : d.k === 'e' ? { extras: (c.extras || []).filter(x => x !== d.v) } : { travas: (c.travas || []).filter(x => !x.startsWith(d.v + ' ')) };
+    await salvarAgendaCfg(patch); Object.assign(S.draft, patch); renderAjustes(); toast('Liberado ✓');
+  },
+  bqPeriodoTirar: async d => { lerAjustes(); const c = C(); const patch = { bloqueios: (c.bloqueios || []).filter(x => x < d.de || x > d.ate) }; await salvarAgendaCfg(patch); Object.assign(S.draft, patch); renderAjustes(); toast('Período liberado ✓'); },
+  bqVer: d => { S.sel = d.v; go('agenda'); },
   addBloq: () => { const v = $('#novoBloq').value; if (!v) return; lerAjustes(); S.draft.bloqueios = [...new Set([...(S.draft.bloqueios || []), v])]; renderAjustes(); },
   delBloq: d => { lerAjustes(); S.draft.bloqueios = (S.draft.bloqueios || []).filter(b => b !== d.b); renderAjustes(); },
   salvarAjustes: async () => {
     lerAjustes(); const c = S.draft; c.servicos = c.servicos.filter(s => s.nome);
     if (!c.servicos.length) { toast('Cadastre pelo menos um serviço'); return; }
+    const vivo = C(); c.bloqueios = vivo.bloqueios || []; c.travas = vivo.travas || []; c.extras = vivo.extras || [];
     await store.set('config', 'geral', c); toast('Ajustes salvos ✓'); renderAjustes();
   },
   testePix: () => {

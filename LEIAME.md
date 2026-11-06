@@ -80,3 +80,10 @@ Ficará assim:
 ## Calendário e Mamãe Noel
 - O dia agora é escolhido num calendário do mês (com setas para o mês seguinte). O pontinho verde marca os dias com horário livre.
 - No modo Natal, aparecem ilustrações animadas da Júlia de Mamãe Noel (topo do link, pedido enviado e dia sem vaga). As cores de cabelo e pele ficam no começo do arquivo mamae-noel.js.
+
+## Liberar e bloquear horários (painel)
+- Na **Agenda**, cada dia tem o quadro "🔒 Liberar e bloquear horários": toque num horário para bloquear (vermelho) e toque de novo para liberar. Salva na hora e o link atualiza sozinho.
+- Atalhos: Bloquear manhã, Bloquear tarde, Liberar tudo, Fechar o dia, Mudar horário do dia.
+- Dia de folga ou dia em que não atende (ex.: segunda): "Reabrir o dia" ou "Abrir com outro horário…" (vale só para aquele dia).
+- Em **Ajustes › Folgas, férias e horários bloqueados**: bloqueia um dia ou um período inteiro (De/Até) e mostra a lista de tudo que está bloqueado, com botão para liberar.
+- Datas que já passaram saem da lista sozinhas.
