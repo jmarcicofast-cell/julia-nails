@@ -124,14 +124,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 [data-natal] .step>span{background:var(--pine);color:#f3d58c}
 [data-natal] .card{border-color:color-mix(in srgb,var(--gold) 22%,var(--line))}
 .regras{background:var(--card);border:1.5px solid color-mix(in srgb,var(--gold) 45%,var(--line));border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
-.regras .rh{background:var(--pine);color:#f6e7bf;font-family:Cinzel,Georgia,serif;font-weight:700;font-size:14px;letter-spacing:.04em;padding:11px 16px;text-align:center}
+.regras{box-shadow:none}
+.regras .rh{list-style:none;cursor:pointer;background:var(--gold-soft);color:var(--ink);font:700 13.5px Manrope,sans-serif;padding:11px 14px;display:flex;justify-content:space-between;align-items:center}
+.regras .rh::-webkit-details-marker{display:none}
+.regras .rh:after{content:"›";font-size:20px;line-height:1;color:var(--gold);transition:transform .2s}
+.regras[open] .rh:after{transform:rotate(90deg)}
 .regras ul{list-style:none;margin:0;padding:6px 14px 10px}
 .regras li{display:flex;gap:12px;align-items:center;padding:9px 0;font-size:14px;font-weight:600}
 .regras li+li{border-top:1px dashed var(--line)}
 .regras li .ic{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--gold-soft);font-size:15px}
 .regras li.hl{color:var(--rose)}
 .regras li.hl .ic{background:var(--rose-soft)}
-.regras .more{display:block;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:10px;font:700 13px Manrope,sans-serif;color:var(--rose);cursor:pointer}
 .pr small{display:block;text-align:right;font:600 11px Manrope,sans-serif;color:var(--gold)}
 .aceite{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;font-weight:600;cursor:pointer}
 .aceite input{width:20px;height:20px;min-height:0;flex:none;margin-top:1px;accent-color:var(--rose)}
@@ -172,7 +175,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 
 <main class="wrap">
   <section class="view on" id="v-agendar">
-    <div id="regras"></div>
     <div id="passos"><p class="muted center mt">Carregando horários…</p></div>
     <div class="card enc stack">
       <div><b>Não encontrou um horário bom?</b><p class="muted small">Deixe seu nome na lista de encaixe. Se abrir uma vaga, você recebe uma mensagem.</p></div>
@@ -186,7 +188,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
       <div id="decoBox"><label class="f">Decoração escolhida</label><input name="deco" placeholder="Ex.: francesinha vermelha com floco de neve dourado"><p class="muted small" style="margin-top:4px">Escolha antes do atendimento — pode mandar foto de referência no WhatsApp.</p></div>
       <div><label class="f">Observação (opcional)</label><input name="obs" placeholder="Ex.: alguma alergia, preferência…"></div>
       <div id="entradaBox"></div>
-      <label class="aceite" id="aceiteBox"><input type="checkbox" name="aceite"><span>Li e aceito os pré-requisitos para agendamento (tolerância de 10 min e entrada não devolvida em caso de falta).</span></label>
+      <div id="regras"></div>
+      <label class="aceite" id="aceiteBox"><input type="checkbox" name="aceite"><span>Li e aceito os pré-requisitos (tolerância de 10 min e entrada não devolvida em caso de falta).</span></label>
       <button class="btn p block" id="btnEnviar">Solicitar horário</button>
       <p class="muted small center" id="dadosNota">O horário fica reservado e a confirmação chega pelo WhatsApp.</p>
     </form>
@@ -327,13 +330,11 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 /* ================= REGRAS ================= */
 const ICONES = [[/hor[aá]rio correto|chegar/i,'🕐'],[/anteced/i,'🚗'],[/toler|atraso/i,'⏰'],[/%|valor do servi/i,'💰'],[/pix|link|chave/i,'💌'],[/falta|devolvid/i,'✖️'],[/novo agendamento|encaixe|disponib/i,'📅'],[/decora/i,'💅'],[/reajuste|natal|adicional/i,'⭐']];
 const DESTAQUE = /%|falta|devolvid|reajuste|adicional/i;
-let regrasAbertas = false;
 function renderRegras(){
   const el = $('#regras'); const rs = N.regras(S.cfg);
   if (!S.cfg || !rs.length){ el.innerHTML = ''; return; }
-  const mostra = regrasAbertas ? rs : rs.slice(0, 4);
-  el.innerHTML = `<div class="regras"><div class="rh">Pré-requisitos para agendamento</div><ul>${mostra.map(r => { const ic = (ICONES.find(([re]) => re.test(r)) || [0, '✨'])[1]; return `<li class="${DESTAQUE.test(r) ? 'hl' : ''}"><span class="ic">${ic}</span><span>${esc(r)}</span></li>`; }).join('')}</ul>
-    ${rs.length > 4 ? `<button class="more" data-act="regras">${regrasAbertas ? 'Mostrar menos' : `Ver todas as regras (${rs.length})`}</button>` : ''}</div>`;
+  const aberto = el.querySelector('details')?.open;
+  el.innerHTML = `<details class="regras"${aberto ? ' open' : ''}><summary class="rh">Ver pré-requisitos para agendamento</summary><ul>${rs.map(r => { const ic = (ICONES.find(([re]) => re.test(r)) || [0, '✨'])[1]; return `<li class="${DESTAQUE.test(r) ? 'hl' : ''}"><span class="ic">${ic}</span><span>${esc(r)}</span></li>`; }).join('')}</ul></details>`;
 }
 
 /* ================= AGENDAR ================= */
@@ -514,7 +515,6 @@ const ACTS = {
   hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
   encaixe: () => formEncaixe(),
   irAgendar: () => go('agendar'),
-  regras: () => { regrasAbertas = !regrasAbertas; renderRegras(); },
   copiarPix: () => { const c = S.pixAtual || ''; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => toast('Código Pix copiado ✓ Cole no app do banco')).catch(() => { const r = document.createRange(); r.selectNodeContents($('#pixCode')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Toque e segure para copiar'); }); }
 };
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault(); fn(t.dataset, t); });
