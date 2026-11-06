@@ -350,7 +350,7 @@ const LABEL = { pendente: 'Aguardando', confirmado: 'Confirmado', concluido: 'Co
 const N = window.NATAL;
 const precoDe = s => N.precoFinal(C(), s);
 const entRecebida = a => a.entrada && a.entrada.status === 'recebida' ? Number(a.entrada.valor) || 0 : 0;
-const chipEntrada = a => !a.entrada ? '' : a.entrada.status === 'recebida' ? `<span class="chip ent ok">Entrada ${brl(a.entrada.valor)} ✓</span>` : a.entrada.status === 'devolvida' ? `<span class="chip">Entrada devolvida</span>` : `<span class="chip ent">Pix de entrada ${brl(a.entrada.valor)} · conferir</span>`;
+const chipEntrada = a => !a.entrada ? '' : a.entrada.status === 'recebida' ? `<span class="chip ent ok">Entrada ${brl(a.entrada.valor)} ✓</span>` : a.entrada.status === 'devolvida' ? `<span class="chip">Entrada devolvida</span>` : `<span class="chip ent">${a.entrada.forma === 'cartao' ? 'Cartão' : 'Pix'} de entrada ${brl(a.entrada.valor)} · conferir</span>`;
 const R = window.RECOMP;
 const recOn = () => R.cfgDe(C()).ativo;
 const perfilDe = tel => { const k = R.chave(tel); return k ? R.calcular(S.ags.filter(a => R.chave(a.telefone) === k), C()) : null; };
@@ -517,7 +517,7 @@ function formConcluir(a){
   const rec = recOn() && a.recompensa ? a.recompensa : null; const desc = rec ? R.desconto(rec.nome) : 0;
   const ent = entRecebida(a); const resta = Math.max(0, (Number(a.preco) || 0) - ent - desc);
   sheet(`<h2>Finalizar atendimento</h2><p class="muted mt">${esc(a.nome)} · ${esc(a.servicoNome)}</p>
-    ${ent ? `<div class="note mt">Entrada de ${brl(ent)} já recebida por Pix. Falta receber ${brl(resta)}.</div>` : ''}<form class="mt">
+    ${ent ? `<div class="note mt">Entrada de ${brl(ent)} já recebida. Falta receber ${brl(resta)}.</div>` : ''}<form class="mt">
     ${rec ? `<label class="tg field" style="font-weight:600"><input type="checkbox" name="rec" checked>🎁 Aplicar recompensa: ${esc(rec.nome)} (${rec.custo}⭐)</label>` : ''}
     <div class="field"><label class="f">${ent ? 'Valor recebido agora (restante)' : 'Valor recebido'} (R$)</label><input name="valor" inputmode="decimal" required value="${String(N.r2(resta)).replace('.', ',')}"></div>
     <div class="field"><label class="f">Forma de pagamento</label>${segFormas()}</div>
@@ -534,7 +534,7 @@ function formConcluir(a){
   });
 }
 async function receberEntrada(a){
-  await store.add('vendas', { data: ymd(new Date()), descricao: a.servicoNome, tipo: 'entrada', cliente: a.nome, valor: Number(a.entrada.valor) || 0, forma: 'pix', agendamentoId: a.id, criadoEm: Date.now() });
+  await store.add('vendas', { data: ymd(new Date()), descricao: a.servicoNome, tipo: 'entrada', cliente: a.nome, valor: Number(a.entrada.valor) || 0, forma: a.entrada.forma === 'cartao' ? 'credito' : 'pix', agendamentoId: a.id, criadoEm: Date.now() });
   const entrada = { ...a.entrada, status: 'recebida', recebidaEm: Date.now() };
   await store.set('agendamentos', a.id, { entrada });
   return { ...a, entrada };
@@ -722,15 +722,19 @@ function renderAjustes(){
   <div class="card stack"><h3>Regras do link</h3>
     <div><label class="f">Horários de quantos em quantos minutos</label><select id="aj-int">${[15, 20, 30, 45, 60].map(n => `<option value="${n}" ${Number(c.intervalo) === n ? 'selected' : ''}>${n} min</option>`).join('')}</select></div>
     <div class="grid2"><div><label class="f">Antecedência mínima (h)</label><input id="aj-ant" type="number" min="0" value="${c.antecedenciaHoras}"></div><div><label class="f">Agenda aberta (dias)</label><input id="aj-dias" type="number" min="1" max="120" value="${c.diasAFrente}"></div></div></div>
-  <div class="card stack"><h3>🎄 Natal e entrada por Pix</h3>
+  <div class="card stack"><h3>🎄 Natal e entrada (Pix ou cartão)</h3>
     <label class="tg"><input type="checkbox" id="aj-natal" ${N.natal(c).ativo ? 'checked' : ''}>Modo Natal (visual natalino e reajuste)</label>
     <div class="grid2"><div><label class="f">Reajuste natalino por serviço (R$)</label><input id="aj-adic" inputmode="decimal" value="${String(N.natal(c).adicional).replace('.', ',')}"></div><div><label class="f">Título no link</label><input id="aj-titulo" value="${esc(N.natal(c).titulo)}"></div></div>
     <label class="tg"><input type="checkbox" id="aj-ent" ${N.entradaCfg(c).ativo ? 'checked' : ''}>Cobrar entrada no agendamento</label>
     <div class="grid2"><div><label class="f">Entrada (% do valor)</label><input id="aj-pct" type="number" min="1" max="100" value="${N.entradaCfg(c).percentual}"></div><div><label class="f">Tipo da chave Pix</label><select id="aj-tipo">${[['celular', 'Celular'], ['cpf', 'CPF/CNPJ'], ['email', 'E-mail'], ['aleatoria', 'Aleatória']].map(([k, l]) => `<option value="${k}" ${N.entradaCfg(c).tipoChave === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
     <div><label class="f">Sua chave Pix</label><input id="aj-chave" value="${esc(N.entradaCfg(c).chavePix)}" placeholder="Ex.: (21) 99999-9999"></div>
     <div class="grid2"><div><label class="f">Nome de quem recebe</label><input id="aj-receb" value="${esc(N.entradaCfg(c).recebedor)}"></div><div><label class="f">Cidade</label><input id="aj-cid" value="${esc(N.entradaCfg(c).cidade)}"></div></div>
-    ${N.entradaCfg(c).ativo && !String(N.entradaCfg(c).chavePix || '').trim() ? '<div class="note">Coloque sua chave Pix para o link começar a cobrar a entrada.</div>' : ''}
+    ${N.entradaCfg(c).ativo && !N.entradaAtiva(c) ? '<div class="note">Coloque sua chave Pix ou um link de cartão para o link começar a cobrar a entrada.</div>' : ''}
     <button class="btn s" data-act="testePix" style="align-self:flex-start">Testar Pix de R$ 1,00</button>
+    <label class="tg"><input type="checkbox" id="aj-card" ${N.entradaCfg(c).cartaoAtivo ? 'checked' : ''}>Aceitar cartão na entrada (link de pagamento)</label>
+    <p class="muted small">Crie links de pagamento na sua maquininha ou plataforma (InfinitePay, Mercado Pago, PagBank…). O ideal é um link com o valor exato de cada entrada; se só tiver um link de valor livre, use o "link geral" e a cliente digita o valor.</p>
+    <div><label class="f">Link geral (valor livre) — opcional</label><input id="aj-linkg" inputmode="url" value="${esc(N.entradaCfg(c).linkCartao || '')}" placeholder="https://…"></div>
+    ${(c.servicos || []).filter(sv => sv.nome).map(sv => `<div><label class="f">Link da entrada · ${esc(sv.nome)} (${brl(N.r2(N.precoFinal(c, sv) * (Number(N.entradaCfg(c).percentual) || 0) / 100))})</label><input class="aj-links" data-sid="${sv.id}" inputmode="url" value="${esc((N.entradaCfg(c).linksCartao || {})[sv.id] || '')}" placeholder="https://…"></div>`).join('')}
     <div><label class="f">Pré-requisitos que aparecem no link (um por linha)</label><textarea id="aj-regras" rows="9">${esc(N.regras(c).join('\n'))}</textarea></div></div>
   <div class="card stack"><h3>🎁 Recompensas das clientes</h3>
     <label class="tg"><input type="checkbox" id="aj-rec" ${R.cfgDe(c).ativo ? 'checked' : ''}>Programa de estrelinhas ativo</label>
@@ -758,7 +762,7 @@ function lerAjustes(){
   c.antecedenciaHoras = Math.max(0, Number($('#aj-ant').value) || 0);
   c.diasAFrente = Math.min(120, Math.max(1, Number($('#aj-dias').value) || 30));
   c.natal = { ativo: $('#aj-natal').checked, adicional: Math.max(0, num($('#aj-adic').value)), titulo: $('#aj-titulo').value.trim() || 'Agenda de Natal' };
-  c.entrada = { ativo: $('#aj-ent').checked, percentual: Math.min(100, Math.max(1, Number($('#aj-pct').value) || 50)), tipoChave: $('#aj-tipo').value, chavePix: $('#aj-chave').value.trim(), recebedor: $('#aj-receb').value.trim() || 'Julia Marcico', cidade: $('#aj-cid').value.trim() || 'Rio de Janeiro' };
+  c.entrada = { ativo: $('#aj-ent').checked, percentual: Math.min(100, Math.max(1, Number($('#aj-pct').value) || 50)), tipoChave: $('#aj-tipo').value, chavePix: $('#aj-chave').value.trim(), recebedor: $('#aj-receb').value.trim() || 'Julia Marcico', cidade: $('#aj-cid').value.trim() || 'Rio de Janeiro', cartaoAtivo: $('#aj-card').checked, linkCartao: $('#aj-linkg').value.trim(), linksCartao: Object.fromEntries([...v.querySelectorAll('.aj-links')].map(i => [i.dataset.sid, i.value.trim()]).filter(x => x[1])) };
   c.recompensas = { ativo: $('#aj-rec').checked, porAtendimento: Math.max(1, Number($('#aj-rpa').value) || 10), bonusNatal: Math.max(0, Number($('#aj-rbn').value) || 0),
     catalogo: $('#aj-cat').value.split('\n').map(l => { const [a, ...b] = l.split('|'); return { custo: Math.round(num(a)), nome: b.join('|').trim() }; }).filter(x => x.custo > 0 && x.nome) };
   c.regras = $('#aj-regras').value.split('\n').map(x => x.trim()).filter(Boolean);
@@ -773,9 +777,9 @@ const ACTS = {
   confirmar: async d => {
     const a = byId(d.id); if (!a) return;
     if (a.entrada && a.entrada.status === 'informada'){
-      sheet(`<div class="stack"><h2>Conferiu o Pix?</h2><p class="muted">${esc(a.nome)} informou que pagou a entrada de <b>${brl(a.entrada.valor)}</b> (${a.entrada.percentual || 50}% de ${brl(a.preco)}). Confira no app do seu banco antes de confirmar.</p>
-        <button class="btn g block" data-act="entradaOk" data-id="${a.id}">Recebi o Pix — confirmar horário</button>
-        <a class="btn block" target="_blank" rel="noopener" href="${waLink(a.telefone, `Oi ${pn(a.nome)}! Ainda não localizei o Pix da entrada de ${brl(a.entrada.valor)} para o seu horário de ${dataLonga(a.data)} às ${a.ini}. Pode me mandar o comprovante? 💕`)}">Não achei — pedir comprovante</a>
+      sheet(`<div class="stack"><h2>Conferiu o ${a.entrada.forma === 'cartao' ? 'pagamento' : 'Pix'}?</h2><p class="muted">${esc(a.nome)} informou que pagou a entrada de <b>${brl(a.entrada.valor)}</b> ${a.entrada.forma === 'cartao' ? 'no cartão' : 'por Pix'} (${a.entrada.percentual || 50}% de ${brl(a.preco)}). Confira ${a.entrada.forma === 'cartao' ? 'nas vendas da sua plataforma de cartão' : 'no app do seu banco'} antes de confirmar.</p>
+        <button class="btn g block" data-act="entradaOk" data-id="${a.id}">Recebi — confirmar horário</button>
+        <a class="btn block" target="_blank" rel="noopener" href="${waLink(a.telefone, `Oi ${pn(a.nome)}! Ainda não localizei o pagamento da entrada de ${brl(a.entrada.valor)} para o seu horário de ${dataLonga(a.data)} às ${a.ini}. Pode me mandar o comprovante? 💕`)}">Não achei — pedir comprovante</a>
         <button class="btn ghost block" data-act="semEntrada" data-id="${a.id}">Confirmar sem a entrada</button>
         <button class="btn block" data-act="fechar">Voltar</button></div>`);
       return;
@@ -896,7 +900,7 @@ function seedDemo(){
   lsSet('demo:seeded', 1);
   const t = new Date(); const d = n => { const x = new Date(t); x.setDate(t.getDate() + n); return ymd(x); };
   const sv = DEFAULT_CONFIG.servicos;
-  store.set('config', 'geral', { ...DEFAULT_CONFIG, ...N.PADRAO, entrada: { ...N.PADRAO.entrada, tipoChave: 'email', chavePix: 'exemplo@juliamarcico.com' } });
+  store.set('config', 'geral', { ...DEFAULT_CONFIG, ...N.PADRAO, entrada: { ...N.PADRAO.entrada, tipoChave: 'email', chavePix: 'exemplo@juliamarcico.com', cartaoAtivo: true, linkCartao: 'https://exemplo.com/pagar', linksCartao: { s2: 'https://exemplo.com/entrada-pe' } } });
   const ag = (id, nome, tel, s, data, ini, status, extra = {}) => {
     const fim = toHM(toMin(ini) + s.duracao);
     store.set('agendamentos', id, { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: s.duracao, preco: s.preco, data, ini, fim, obs: '', status, origem: 'link', criadoEm: Date.now(), ...extra });

@@ -145,6 +145,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 .qr{width:220px;max-width:70vw;margin:4px auto 0;background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line)}
 .qr svg{display:block;width:100%;height:auto}
 .pixcode{font:600 11.5px ui-monospace,monospace;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:10px;word-break:break-all;max-height:84px;overflow:auto;text-align:left}
+.metodos{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:4px}
+.metodos button{border:0;background:none;border-radius:10px;padding:10px;font:700 14px Manrope,sans-serif;color:var(--muted);cursor:pointer}
+.metodos button.on{background:var(--rose);color:var(--rose-ink)}
 .passos{counter-reset:p;list-style:none;margin:0;padding:0;font-size:13.5px;text-align:left}
 .passos li{counter-increment:p;display:flex;gap:10px;align-items:flex-start}
 .passos li+li{margin-top:6px}
@@ -333,7 +336,7 @@ const DEFAULT_CONFIG = {
   intervalo: 30, antecedenciaHoras: 2, diasAFrente: 30,
   horarios: { 0:{ativo:false}, 1:{ativo:false}, 2:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 3:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 4:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 5:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 6:{ativo:true,ini:'08:00',fim:'16:00',pIni:'',pFim:''} },
   bloqueios: [],
-  entrada: { ativo: true, percentual: 50, tipoChave: 'email', chavePix: 'exemplo@juliamarcico.com', recebedor: 'Julia Marcico', cidade: 'Rio de Janeiro' },
+  entrada: { ativo: true, percentual: 50, tipoChave: 'email', chavePix: 'exemplo@juliamarcico.com', recebedor: 'Julia Marcico', cidade: 'Rio de Janeiro', cartaoAtivo: true, linkCartao: 'https://exemplo.com/pagar' },
   servicos: [ { id:'s1',nome:'Mão',duracao:45,preco:35 }, { id:'s2',nome:'Pé',duracao:45,preco:40 }, { id:'s3',nome:'Pé e mão',duracao:90,preco:70 }, { id:'s4',nome:'Esmaltação em gel',duracao:60,preco:60 }, { id:'s5',nome:'Alongamento em gel',duracao:120,preco:150 }, { id:'s6',nome:'Manutenção do alongamento',duracao:90,preco:100 } ]
 };
 
@@ -427,7 +430,7 @@ function renderPassos(){
     renderRecBox();
     $('#decoBox').hidden = !natalOn(); $('#aceiteBox').hidden = !N.regras(c).length;
     $('#btnEnviar').textContent = en ? 'Continuar para pagar a entrada' : 'Solicitar horário';
-    $('#dadosNota').textContent = en ? 'No próximo passo você paga a entrada por Pix aqui mesmo, e o horário fica reservado.' : 'O horário fica reservado e a confirmação chega pelo WhatsApp.';
+    $('#dadosNota').textContent = en ? `No próximo passo você paga a entrada ${N.temPix(c) && N.linkCartao(c, s.id) ? 'por Pix ou cartão' : N.temPix(c) ? 'por Pix' : 'no cartão'} aqui mesmo, e o horário fica reservado.` : 'O horário fica reservado e a confirmação chega pelo WhatsApp.';
   }
   const on = $('#dstrip .dd.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
@@ -451,24 +454,37 @@ $('#dados').addEventListener('submit', async e => {
 });
 function livre(){ const s = servAtual(); return !!(s && S.dia && S.hora && slotsDoDia(S.cfg, S.ocup, S.dia, Number(s.duracao), S.cfg.antecedenciaHoras).includes(S.hora)); }
 
-function telaPix(id, ag, valor){
-  const codigo = N.pixCodigo(S.cfg, valor, id, 'Entrada ' + ag.servicoNome);
-  const qr = N.pixQrSvg(codigo); const e = N.entradaCfg(S.cfg);
-  sheet(`<div class="stack center"><h2>Pague a entrada por Pix</h2>
+function telaPix(id, ag, valor, metodo){
+  const pix = N.temPix(S.cfg); const card = N.linkCartao(S.cfg, ag.servicoId);
+  metodo = metodo || (pix ? 'pix' : 'cartao');
+  if (metodo === 'pix' && !pix) metodo = 'cartao';
+  if (metodo === 'cartao' && !card) metodo = 'pix';
+  const e = N.entradaCfg(S.cfg);
+  const topo = `<h2>Pague a entrada</h2>
     <div class="ent"><span>${esc(ag.servicoNome)} · ${dataLonga(ag.data).split(',')[0]} ${ag.ini}</span><b>${brl(valor)}</b><span class="tot">${pct()}% de ${brl(ag.preco)} · restante no dia</span><span class="tot" style="text-align:right">${brl(ag.preco - valor)}</span></div>
-    ${qr ? `<div class="qr" aria-label="QR Code Pix">${qr}</div>` : ''}
+    ${pix && card ? `<div class="metodos"><button class="${metodo === 'pix' ? 'on' : ''}" data-m="pix">💠 Pix</button><button class="${metodo === 'cartao' ? 'on' : ''}" data-m="cartao">💳 Cartão</button></div>` : ''}`;
+  let corpo = '';
+  if (metodo === 'pix'){
+    const codigo = N.pixCodigo(S.cfg, valor, id, 'Entrada ' + ag.servicoNome); S.pixAtual = codigo;
+    const qr = N.pixQrSvg(codigo);
+    corpo = `${qr ? `<div class="qr" aria-label="QR Code Pix">${qr}</div>` : ''}
     <button class="btn p block" data-act="copiarPix">Copiar código Pix (copia e cola)</button>
     <div class="pixcode" id="pixCode">${esc(codigo)}</div>
-    <ol class="passos"><li><span>Abra o app do seu banco e escolha <b>Pix › Copia e cola</b> (ou leia o QR Code).</span></li><li><span>Confira o valor de <b>${brl(valor)}</b> para <b>${esc(e.recebedor)}</b> e conclua.</span></li><li><span>Volte aqui e toque em <b>Já paguei</b> para enviar seu pedido.</span></li></ol>
+    <ol class="passos"><li><span>Abra o app do seu banco e escolha <b>Pix › Copia e cola</b> (ou leia o QR Code).</span></li><li><span>Confira o valor de <b>${brl(valor)}</b> para <b>${esc(e.recebedor)}</b> e conclua.</span></li><li><span>Volte aqui e toque em <b>Já paguei</b> para enviar seu pedido.</span></li></ol>`;
+  } else {
+    corpo = `<a class="btn p block" id="btnCartao" href="${esc(card.url)}" target="_blank" rel="noopener">💳 Pagar ${brl(valor)} no cartão</a>
+    <ol class="passos"><li><span>Toque no botão acima: abre a página segura de pagamento${card.fixo ? '' : ` — <b>digite o valor de ${brl(valor)}</b>`}.</span></li><li><span>Pague com seu cartão de crédito ou débito.</span></li><li><span>Volte aqui e toque em <b>Já paguei</b> para enviar seu pedido.</span></li></ol>`;
+  }
+  sheet(`<div class="stack center">${topo}${corpo}
     <button class="btn g block" id="btnPaguei">Já paguei — enviar meu pedido</button>
     <button class="btn block" data-act="fechar">Voltar</button>
     <p class="muted small">O horário só é garantido depois que a entrada for conferida. Em caso de falta, a entrada não é devolvida.</p></div>`, sh => {
+    sh.querySelectorAll('.metodos button').forEach(bt => bt.onclick = () => telaPix(id, ag, valor, bt.dataset.m));
     sh.querySelector('#btnPaguei').onclick = ev => {
       if (!livre()){ closeSheet(); toast('Esse horário acabou de ser ocupado. Escolha outro.'); S.hora = null; renderPassos(); return; }
-      enviarPedido(id, { ...ag, entrada: { valor, percentual: pct(), forma: 'pix', status: 'informada', informadaEm: Date.now() } }, ev.currentTarget);
+      enviarPedido(id, { ...ag, entrada: { valor, percentual: pct(), forma: metodo, status: 'informada', informadaEm: Date.now() } }, ev.currentTarget);
     };
   });
-  S.pixAtual = codigo;
 }
 
 async function enviarPedido(id, ag, btn){
@@ -484,7 +500,7 @@ async function enviarPedido(id, ag, btn){
   const f = $('#dados'); f.obs.value = ''; f.deco.value = ''; f.aceite.checked = false;
   S.serv = null; S.dia = null; S.hora = null; S.recSel = ''; renderPassos();
   const w = S.cfg.whatsapp; const en = ag.entrada;
-  const msg = `Oi! Acabei de pedir um horário pelo link 💅\n${ag.servicoNome} · ${dataLonga(ag.data)} às ${ag.ini}\nNome: ${ag.nome}` + (ag.deco ? `\nDecoração: ${ag.deco}` : '') + (en ? `\n\nJá fiz o Pix da entrada de ${brl(en.valor)}. Segue o comprovante:` : '');
+  const msg = `Oi! Acabei de pedir um horário pelo link 💅\n${ag.servicoNome} · ${dataLonga(ag.data)} às ${ag.ini}\nNome: ${ag.nome}` + (ag.deco ? `\nDecoração: ${ag.deco}` : '') + (en ? `\n\nJá paguei a entrada de ${brl(en.valor)} no ${en.forma === 'cartao' ? 'cartão' : 'Pix'}. Segue o comprovante:` : '');
   sheet(`<div class="stack center"><div class="ok">${natalOn() ? '🎄' : '💅'}</div><h2>Pedido enviado!</h2>
     <p class="muted">${esc(ag.servicoNome)}<br><span>${dataLonga(ag.data)}</span> às ${ag.ini}</p>
     <p class="small">${en ? `Recebemos seu aviso de pagamento da entrada (${brl(en.valor)}). Assim que for conferido, seu horário é confirmado e você vê em <b>Meus horários</b>.` : 'Seu horário está reservado. Assim que for confirmado, você recebe uma mensagem e vê em <b>Meus horários</b>.'}</p>

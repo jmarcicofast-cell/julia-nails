@@ -7,7 +7,7 @@
     'Sair de casa com antecedência',
     'Tolerância de atraso de 10 min',
     'Para agendamento será necessário 50% do valor do serviço',
-    'O pagamento da entrada é feito por Pix direto no link de agendamento',
+    'O pagamento da entrada é feito por Pix ou cartão direto no link de agendamento',
     'Em caso de falta o valor não será devolvido',
     'Para um novo agendamento consulte a disponibilidade no link ou entre na lista de encaixe',
     'Decorações devem já ter sido previamente escolhidas antes do serviço',
@@ -15,7 +15,7 @@
   ];
   const PADRAO = {
     natal: { ativo: true, adicional: 10, titulo: 'Agenda de Natal' },
-    entrada: { ativo: true, percentual: 50, tipoChave: 'celular', chavePix: '', recebedor: 'Julia Marcico', cidade: 'Rio de Janeiro' },
+    entrada: { ativo: true, percentual: 50, tipoChave: 'celular', chavePix: '', recebedor: 'Julia Marcico', cidade: 'Rio de Janeiro', cartaoAtivo: false, linkCartao: '', linksCartao: {} },
     regras: REGRAS_PADRAO
   };
 
@@ -27,7 +27,12 @@
   /** Preço que a cliente paga (com o adicional natalino, se ligado) */
   const precoFinal = (cfg, s) => r2((Number(s && s.preco) || 0) + (natal(cfg).ativo ? Number(natal(cfg).adicional) || 0 : 0));
   /** Entrada exigida (0 se a entrada estiver desligada ou sem chave Pix) */
-  const entradaAtiva = cfg => { const e = entradaCfg(cfg); return !!(e.ativo && String(e.chavePix || '').trim()); };
+  const temPix = cfg => !!String(entradaCfg(cfg).chavePix || '').trim();
+  const url = u => /^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
+  /** Link de cartão para um serviço: o link próprio do serviço ou o link geral */
+  const linkCartao = (cfg, servicoId) => { const e = entradaCfg(cfg); if (!e.cartaoAtivo) return null; const proprio = url((e.linksCartao || {})[servicoId]); if (proprio) return { url: proprio, fixo: true }; const geral = url(e.linkCartao); return geral ? { url: geral, fixo: false } : null; };
+  const temCartao = cfg => { const e = entradaCfg(cfg); return !!(e.cartaoAtivo && (url(e.linkCartao) || Object.values(e.linksCartao || {}).some(url))); };
+  const entradaAtiva = cfg => { const e = entradaCfg(cfg); return !!(e.ativo && (temPix(cfg) || temCartao(cfg))); };
   const valorEntrada = (cfg, preco) => entradaAtiva(cfg) ? r2(Number(preco) * (Number(entradaCfg(cfg).percentual) || 0) / 100) : 0;
 
   /* ---------- Pix "copia e cola" (padrão BR Code do Banco Central) ---------- */
@@ -65,5 +70,5 @@
     return q.createSvgTag({ cellSize: 5, margin: 2, scalable: true });
   }
 
-  window.NATAL = { PADRAO, REGRAS_PADRAO, natal, entradaCfg, regras, precoFinal, entradaAtiva, valorEntrada, pixCodigo, pixQrSvg, crc16, r2 };
+  window.NATAL = { temPix, temCartao, linkCartao, PADRAO, REGRAS_PADRAO, natal, entradaCfg, regras, precoFinal, entradaAtiva, valorEntrada, pixCodigo, pixQrSvg, crc16, r2 };
 })();

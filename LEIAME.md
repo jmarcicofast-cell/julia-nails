@@ -64,3 +64,9 @@ Ficará assim:
 - Cada atendimento concluído vale +10⭐ (+5⭐ de bônus no Natal). Emblemas: primeira reserva, estreia, unhas de Natal, Pix em dia, exploradora, de volta no mês, cliente fiel, sempre presente e rainha das unhas.
 - Ao agendar, ela escolhe o mimo se tiver estrelas. No painel aparece "🎁 Quer usar" com o saldo dela; no "Finalizar e receber" a Júlia marca se aplicou (prêmio de "R$ de desconto" já abate do valor).
 - Em **Ajustes › Recompensas** dá para mudar as estrelas por atendimento, o bônus de Natal e a lista de mimos (`estrelas | prêmio`, um por linha).
+
+## 💳 Entrada no cartão
+- Em **Ajustes › Natal e entrada**, marque "Aceitar cartão na entrada" e cole os links de pagamento criados na sua plataforma (InfinitePay, Mercado Pago, PagBank…).
+- Melhor opção: um link com o valor exato da entrada de cada serviço (o painel mostra o valor ao lado de cada campo). Se a plataforma só tiver link de valor livre, use o "link geral": a cliente é avisada para digitar o valor.
+- A cliente escolhe Pix ou Cartão na tela de pagamento. No painel aparece "Cartão de entrada · conferir"; confira nas vendas da plataforma e toque em "Recebi". A entrada vai para o financeiro como Crédito.
+- Se mudar o preço ou a % da entrada, lembre de criar links novos com o valor certo.
