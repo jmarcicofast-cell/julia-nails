@@ -49,3 +49,11 @@ Ficará assim:
 - As clientes não veem nomes de outras clientes — o link só enxerga se o horário está livre.
 - Os avisos de novo pedido e nova mensagem funcionam com o app aberto ou em segundo plano no celular.
 - O plano grátis do Firebase aguenta com folga o movimento de um studio.
+
+## 🎄 Agenda de Natal e entrada por Pix
+- **Ajustes › Natal e entrada por Pix**: liga/desliga o visual natalino e o reajuste (R$10 por serviço), define a % da entrada (50%), a chave Pix, o nome e a cidade de quem recebe, e os pré-requisitos que aparecem no link.
+- No link, depois de escolher serviço, dia e horário, a cliente informa a decoração, aceita as regras e **paga a entrada por Pix ali mesmo** (QR Code ou copia e cola com o valor já preenchido). Só depois de tocar em "Já paguei" o pedido é enviado.
+- No painel, o pedido chega com "Pix de entrada · conferir". Ao confirmar, a Júlia confere no banco e toca em "Recebi o Pix" — a entrada entra no financeiro e, no "Finalizar e receber", só aparece o restante.
+- "Faltou" registra a falta e libera o horário (a entrada fica com ela). "Cancelar" pergunta se vai devolver a entrada e lança a devolução como saída.
+- Use "Testar Pix de R$ 1,00" para conferir se a chave está certa antes de divulgar.
+- Depois do Natal: desmarque "Modo Natal" e o app volta ao visual rosa, sem o reajuste.

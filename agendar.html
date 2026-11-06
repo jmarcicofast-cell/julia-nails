@@ -1,17 +1,20 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-natal>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Agende seu horário · Júlia Marcico Nails</title>
 <meta name="description" content="Agende seu horário de manicure com a Júlia Marcico Nails.">
-<meta name="theme-color" content="#c4507a">
+<meta name="theme-color" content="#8e1620">
 <link rel="icon" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Great+Vibes&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script src="natal.js"></script>
+<script src="qrcode.js"></script>
+<script>try{if(localStorage.getItem("natalOff")==="1")document.documentElement.removeAttribute("data-natal")}catch(e){}</script>
 <style>
 :root{--bg:#faf6f3;--card:#fff;--ink:#2a1f24;--muted:#8b7b81;--line:#efe4e7;--rose:#c4507a;--rose-ink:#fff;--rose-soft:#f8e6ed;--green:#2e8b66;--green-soft:#e3f3ec;--red:#c2483f;--red-soft:#fae7e5;--amber:#a86d14;--amber-soft:#fbf0dc;--shadow:0 1px 2px rgba(60,20,35,.04),0 6px 18px rgba(60,20,35,.06);--r:18px}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17121a;--card:#221b25;--ink:#f3e9ee;--muted:#a8979f;--line:#352b38;--rose:#e27aa0;--rose-ink:#1b1015;--rose-soft:#3a2330;--green:#5cc497;--green-soft:#1d3229;--red:#ee7a70;--red-soft:#3b2220;--amber:#e3ac57;--amber-soft:#3a2f1c;--shadow:none}}
@@ -51,7 +54,7 @@ p{margin:0}
 .chip.pendente{background:var(--amber-soft);color:var(--amber)}
 .chip.confirmado{background:var(--green-soft);color:var(--green)}
 .chip.concluido{background:var(--line);color:var(--muted)}
-.chip.cancelado,.chip.recusado{background:var(--red-soft);color:var(--red)}
+.chip.cancelado,.chip.recusado,.chip.falta{background:var(--red-soft);color:var(--red)}
 input,select,textarea{width:100%;font:16px Manrope,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none;min-height:46px}
 textarea{min-height:70px;resize:vertical}
 input:focus,select:focus,textarea:focus{border-color:var(--rose)}
@@ -97,11 +100,65 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .ok{font-size:44px;text-align:center}
 .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}
+
+/* ===== TEMA DE NATAL ===== */
+:root[data-natal]{--bg:#f7efe4;--card:#fffcf6;--ink:#3b1a1a;--muted:#8a6f63;--line:#ecdcc6;--rose:#9e1b24;--rose-ink:#fff8ec;--rose-soft:#f7e1d9;--green:#1f5c3f;--green-soft:#e1efe6;--gold:#b98a2e;--gold-soft:#f5e8c8;--pine:#173d2b;--shadow:0 1px 2px rgba(80,20,10,.05),0 8px 22px rgba(80,20,10,.08)}
+@media (prefers-color-scheme:dark){:root[data-natal]:not([data-theme=light]){--bg:#140f0d;--card:#201815;--ink:#f6ece0;--muted:#b09c8e;--line:#3a2c25;--rose:#e0564f;--rose-ink:#1b0d0b;--rose-soft:#3c1f1c;--green:#5fbf8f;--green-soft:#173326;--gold:#e2bd6b;--gold-soft:#3a2f1a;--pine:#0f2a1e;--shadow:none}}
+.xmas{display:none}
+[data-natal] .xmas{display:block}
+[data-natal] .hero-std{display:none}
+.xhero{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#b3222c 0%,#8e1620 55%,#6d0f17 100%);color:#fff6e6;text-align:center;padding:calc(30px + env(safe-area-inset-top)) 20px 34px;border-bottom:3px solid #c9a24a}
+.xhero .t{font-family:Cinzel,Georgia,serif;font-weight:700;font-size:clamp(30px,9vw,46px);line-height:1;letter-spacing:.02em;background:linear-gradient(180deg,#f8e3a6 0%,#e0b65a 45%,#b98a2e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(0,0,0,.08)}
+.xhero .n{font-family:"Great Vibes",cursive;font-size:34px;line-height:1.1;color:#f3d58c;margin-top:8px}
+.xhero p{color:#f6dcc8;font-size:14px;margin:8px auto 0;max-width:420px}
+.xhero .flk{position:absolute;color:#e6c46f;opacity:.75;font-size:22px;line-height:1}
+.xhero .sep{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px auto 0;color:#e0b65a;font-size:12px}
+.xhero .sep:before,.xhero .sep:after{content:"";height:1px;width:70px;background:linear-gradient(90deg,transparent,#e0b65a)}
+.xhero .sep:after{transform:scaleX(-1)}
+.snow{position:absolute;inset:0;pointer-events:none}
+.snow i{position:absolute;top:-10px;width:6px;height:6px;border-radius:50%;background:#fff;opacity:.55;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(260px) translateX(18px)}}
+@media (prefers-reduced-motion:reduce){.snow{display:none}}
+[data-natal] .tabs-in{border-color:color-mix(in srgb,var(--gold) 35%,var(--line))}
+[data-natal] h3{color:var(--ink)}
+[data-natal] .step>span{background:var(--pine);color:#f3d58c}
+[data-natal] .card{border-color:color-mix(in srgb,var(--gold) 22%,var(--line))}
+.regras{background:var(--card);border:1.5px solid color-mix(in srgb,var(--gold) 45%,var(--line));border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.regras .rh{background:var(--pine);color:#f6e7bf;font-family:Cinzel,Georgia,serif;font-weight:700;font-size:14px;letter-spacing:.04em;padding:11px 16px;text-align:center}
+.regras ul{list-style:none;margin:0;padding:6px 14px 10px}
+.regras li{display:flex;gap:12px;align-items:center;padding:9px 0;font-size:14px;font-weight:600}
+.regras li+li{border-top:1px dashed var(--line)}
+.regras li .ic{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--gold-soft);font-size:15px}
+.regras li.hl{color:var(--rose)}
+.regras li.hl .ic{background:var(--rose-soft)}
+.regras .more{display:block;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:10px;font:700 13px Manrope,sans-serif;color:var(--rose);cursor:pointer}
+.pr small{display:block;text-align:right;font:600 11px Manrope,sans-serif;color:var(--gold)}
+.aceite{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;font-weight:600;cursor:pointer}
+.aceite input{width:20px;height:20px;min-height:0;flex:none;margin-top:1px;accent-color:var(--rose)}
+.ent{text-align:left;display:grid;grid-template-columns:1fr auto;gap:4px 10px;background:var(--gold-soft);border-radius:12px;padding:12px;font-size:14px}
+.ent b{font-family:Fraunces,serif;font-size:18px;text-align:right}
+.ent .tot{color:var(--muted);font-size:13px}
+.qr{width:220px;max-width:70vw;margin:4px auto 0;background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line)}
+.qr svg{display:block;width:100%;height:auto}
+.pixcode{font:600 11.5px ui-monospace,monospace;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:10px;word-break:break-all;max-height:84px;overflow:auto;text-align:left}
+.passos{counter-reset:p;list-style:none;margin:0;padding:0;font-size:13.5px;text-align:left}
+.passos li{counter-increment:p;display:flex;gap:10px;align-items:flex-start}
+.passos li+li{margin-top:6px}
+.passos li:before{content:counter(p);width:22px;height:22px;flex:none;border-radius:50%;background:var(--pine);color:#f3d58c;display:grid;place-items:center;font-weight:700;font-size:12px}
+[data-natal] .foot{font-family:"Great Vibes",cursive;font-size:26px;color:var(--gold)}
 </style>
 </head>
 <body>
 
-<div class="hero">
+<header class="xhero xmas">
+  <div class="snow" id="snow"></div>
+  <span class="flk" style="left:16px;top:calc(18px + env(safe-area-inset-top))">✻</span><span class="flk" style="right:16px;top:calc(18px + env(safe-area-inset-top))">✻</span>
+  <div class="t" id="xTitulo">Agenda de Natal</div>
+  <div class="n" id="xNome">Júlia Marcico Nails</div>
+  <div class="sep">♥</div>
+  <p id="xBoas">Escolha o serviço e o melhor horário pra você 💅</p>
+</header>
+<div class="hero hero-std">
   <div class="k">Agendamento online</div>
   <h1 id="nome">Júlia Marcico Nails</h1>
   <p id="boas">Escolha o serviço e o melhor horário pra você 💅</p>
@@ -115,6 +172,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 
 <main class="wrap">
   <section class="view on" id="v-agendar">
+    <div id="regras"></div>
     <div id="passos"><p class="muted center mt">Carregando horários…</p></div>
     <div class="card enc stack">
       <div><b>Não encontrou um horário bom?</b><p class="muted small">Deixe seu nome na lista de encaixe. Se abrir uma vaga, você recebe uma mensagem.</p></div>
@@ -125,9 +183,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
       <div class="resumo" id="resumo"></div>
       <div><label class="f">Seu nome</label><input name="nome" autocomplete="name" required></div>
       <div><label class="f">Seu WhatsApp com DDD</label><input name="telefone" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
-      <div><label class="f">Observação (opcional)</label><input name="obs" placeholder="Ex.: cor que quer, alguma alergia…"></div>
+      <div id="decoBox"><label class="f">Decoração escolhida</label><input name="deco" placeholder="Ex.: francesinha vermelha com floco de neve dourado"><p class="muted small" style="margin-top:4px">Escolha antes do atendimento — pode mandar foto de referência no WhatsApp.</p></div>
+      <div><label class="f">Observação (opcional)</label><input name="obs" placeholder="Ex.: alguma alergia, preferência…"></div>
+      <div id="entradaBox"></div>
+      <label class="aceite" id="aceiteBox"><input type="checkbox" name="aceite"><span>Li e aceito os pré-requisitos para agendamento (tolerância de 10 min e entrada não devolvida em caso de falta).</span></label>
       <button class="btn p block" id="btnEnviar">Solicitar horário</button>
-      <p class="muted small center">O horário fica reservado e a confirmação chega pelo WhatsApp.</p>
+      <p class="muted small center" id="dadosNota">O horário fica reservado e a confirmação chega pelo WhatsApp.</p>
     </form>
   </section>
 
@@ -211,6 +272,7 @@ const DEFAULT_CONFIG = {
   intervalo: 30, antecedenciaHoras: 2, diasAFrente: 30,
   horarios: { 0:{ativo:false}, 1:{ativo:false}, 2:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 3:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 4:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 5:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 6:{ativo:true,ini:'08:00',fim:'16:00',pIni:'',pFim:''} },
   bloqueios: [],
+  entrada: { ativo: true, percentual: 50, tipoChave: 'email', chavePix: 'exemplo@juliamarcico.com', recebedor: 'Julia Marcico', cidade: 'Rio de Janeiro' },
   servicos: [ { id:'s1',nome:'Mão',duracao:45,preco:35 }, { id:'s2',nome:'Pé',duracao:45,preco:40 }, { id:'s3',nome:'Pé e mão',duracao:90,preco:70 }, { id:'s4',nome:'Esmaltação em gel',duracao:60,preco:60 }, { id:'s5',nome:'Alongamento em gel',duracao:120,preco:150 }, { id:'s6',nome:'Manutenção do alongamento',duracao:90,preco:100 } ]
 };
 
@@ -240,7 +302,12 @@ const me = () => lsGet('cliente') || {};
 const salvarMe = (nome, telefone) => lsSet('cliente', { nome, telefone });
 const meusIds = () => lsGet('meusAgs') || [];
 const servAtual = () => (S.cfg?.servicos || []).find(s => s.id === S.serv);
-const LABEL = { pendente: 'Aguardando confirmação', confirmado: 'Confirmado ✓', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Não foi possível' };
+const LABEL = { pendente: 'Aguardando confirmação', confirmado: 'Confirmado ✓', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Não foi possível', falta: 'Falta registrada' };
+const N = window.NATAL;
+const precoDe = s => N.precoFinal(S.cfg, s);
+const natalOn = () => N.natal(S.cfg).ativo;
+const entradaOn = () => N.entradaAtiva(S.cfg);
+const pct = () => Number(N.entradaCfg(S.cfg).percentual) || 0;
 
 let toastT;
 function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2800); }
@@ -257,6 +324,18 @@ function go(v){
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
 
+/* ================= REGRAS ================= */
+const ICONES = [[/hor[aá]rio correto|chegar/i,'🕐'],[/anteced/i,'🚗'],[/toler|atraso/i,'⏰'],[/%|valor do servi/i,'💰'],[/pix|link|chave/i,'💌'],[/falta|devolvid/i,'✖️'],[/novo agendamento|encaixe|disponib/i,'📅'],[/decora/i,'💅'],[/reajuste|natal|adicional/i,'⭐']];
+const DESTAQUE = /%|falta|devolvid|reajuste|adicional/i;
+let regrasAbertas = false;
+function renderRegras(){
+  const el = $('#regras'); const rs = N.regras(S.cfg);
+  if (!S.cfg || !rs.length){ el.innerHTML = ''; return; }
+  const mostra = regrasAbertas ? rs : rs.slice(0, 4);
+  el.innerHTML = `<div class="regras"><div class="rh">Pré-requisitos para agendamento</div><ul>${mostra.map(r => { const ic = (ICONES.find(([re]) => re.test(r)) || [0, '✨'])[1]; return `<li class="${DESTAQUE.test(r) ? 'hl' : ''}"><span class="ic">${ic}</span><span>${esc(r)}</span></li>`; }).join('')}</ul>
+    ${rs.length > 4 ? `<button class="more" data-act="regras">${regrasAbertas ? 'Mostrar menos' : `Ver todas as regras (${rs.length})`}</button>` : ''}</div>`;
+}
+
 /* ================= AGENDAR ================= */
 function diasDisponiveis(){
   const c = S.cfg; const n = Number(c.diasAFrente) || 30; const out = []; const t = new Date();
@@ -272,7 +351,7 @@ function renderPassos(){
   if (S.hora && !slots.includes(S.hora)) S.hora = null;
   el.innerHTML = `
   <div class="card stack"><div class="step"><span>1</span><h3>Escolha o serviço</h3></div>
-    <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(x.preco)}</b></button>`).join('')}</div></div>
+    <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(precoDe(x))}${natalOn() && Number(N.natal(c).adicional) ? `<small>com +${brl(N.natal(c).adicional)} natalino</small>` : ''}</b></button>`).join('')}</div></div>
   <div class="card stack ${s ? '' : 'dim'}"><div class="step"><span>2</span><h3>Escolha o dia</h3></div>
     <div class="dstrip" id="dstrip">${dias.map(({ d, livres }) => { const x = parseYmd(d); return `<button class="dd ${d === S.dia ? 'on' : ''}" data-act="dia" data-d="${d}" ${livres ? '' : 'disabled'}>${DIAS[x.getDay()]}<b>${x.getDate()}</b>${x.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</button>`; }).join('')}</div></div>
   <div class="card stack ${s && S.dia ? '' : 'dim'}"><div class="step"><span>3</span><h3>Escolha o horário</h3></div>
@@ -280,36 +359,73 @@ function renderPassos(){
   const form = $('#dados');
   form.hidden = !(s && S.dia && S.hora);
   if (!form.hidden){
-    $('#resumo').innerHTML = `<b>${esc(s.nome)}</b> · ${brl(s.preco)}<br><span class="muted">${dataLonga(S.dia)}</span> às <b>${S.hora}</b>`;
+    const pr = precoDe(s); const en = N.valorEntrada(c, pr);
+    $('#resumo').innerHTML = `<b>${esc(s.nome)}</b> · ${brl(pr)}<br><span class="muted">${dataLonga(S.dia)}</span> às <b>${S.hora}</b>`;
+    $('#entradaBox').innerHTML = en ? `<div class="ent"><span>Entrada para reservar (${pct()}%)</span><b>${brl(en)}</b><span class="tot">Restante no dia do atendimento</span><span class="tot" style="text-align:right">${brl(pr - en)}</span></div>` : '';
+    $('#decoBox').hidden = !natalOn(); $('#aceiteBox').hidden = !N.regras(c).length;
+    $('#btnEnviar').textContent = en ? 'Continuar para pagar a entrada' : 'Solicitar horário';
+    $('#dadosNota').textContent = en ? 'No próximo passo você paga a entrada por Pix aqui mesmo, e o horário fica reservado.' : 'O horário fica reservado e a confirmação chega pelo WhatsApp.';
   }
   const on = $('#dstrip .dd.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
 
 $('#dados').addEventListener('submit', async e => {
-  e.preventDefault(); const f = e.target; const btn = $('#btnEnviar');
-  const nome = f.nome.value.trim(), tel = f.telefone.value.trim();
+  e.preventDefault(); const f = e.target;
+  const nome = f.nome.value.trim(), tel = f.telefone.value.trim(), deco = f.deco.value.trim();
+  if (!nome){ toast('Digite seu nome'); return; }
   if (digits(tel).length < 10){ toast('Confira seu WhatsApp com DDD'); return; }
+  if (natalOn() && deco.length < 3){ toast('Conte qual decoração você escolheu'); f.deco.focus(); return; }
+  if (!$('#aceiteBox').hidden && !f.aceite.checked){ toast('Marque que leu e aceita os pré-requisitos'); return; }
   const s = servAtual(); const c = S.cfg;
-  if (!slotsDoDia(c, S.ocup, S.dia, Number(s.duracao), c.antecedenciaHoras).includes(S.hora)){ toast('Esse horário acabou de ser ocupado. Escolha outro.'); S.hora = null; renderPassos(); return; }
-  btn.disabled = true; btn.textContent = 'Enviando…';
-  const id = uid(); const fim = toHM(toMin(S.hora) + Number(s.duracao));
-  const ag = { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao), preco: Number(s.preco), data: S.dia, ini: S.hora, fim, obs: f.obs.value.trim(), status: 'pendente', origem: 'link', criadoEm: Date.now() };
+  if (!livre()){ toast('Esse horário acabou de ser ocupado. Escolha outro.'); S.hora = null; renderPassos(); return; }
+  const id = uid(); const preco = precoDe(s); const fim = toHM(toMin(S.hora) + Number(s.duracao));
+  const ag = { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao), preco, precoBase: Number(s.preco) || 0, adicionalNatal: natalOn() ? Number(N.natal(c).adicional) || 0 : 0, data: S.dia, ini: S.hora, fim, deco, obs: f.obs.value.trim(), aceitouRegras: !!f.aceite.checked, status: 'pendente', origem: 'link', criadoEm: Date.now() };
+  salvarMe(nome, tel);
+  const en = N.valorEntrada(c, preco);
+  if (en) telaPix(id, ag, en); else enviarPedido(id, ag, $('#btnEnviar'));
+});
+function livre(){ const s = servAtual(); return !!(s && S.dia && S.hora && slotsDoDia(S.cfg, S.ocup, S.dia, Number(s.duracao), S.cfg.antecedenciaHoras).includes(S.hora)); }
+
+function telaPix(id, ag, valor){
+  const codigo = N.pixCodigo(S.cfg, valor, id, 'Entrada ' + ag.servicoNome);
+  const qr = N.pixQrSvg(codigo); const e = N.entradaCfg(S.cfg);
+  sheet(`<div class="stack center"><h2>Pague a entrada por Pix</h2>
+    <div class="ent"><span>${esc(ag.servicoNome)} · ${dataLonga(ag.data).split(',')[0]} ${ag.ini}</span><b>${brl(valor)}</b><span class="tot">${pct()}% de ${brl(ag.preco)} · restante no dia</span><span class="tot" style="text-align:right">${brl(ag.preco - valor)}</span></div>
+    ${qr ? `<div class="qr" aria-label="QR Code Pix">${qr}</div>` : ''}
+    <button class="btn p block" data-act="copiarPix">Copiar código Pix (copia e cola)</button>
+    <div class="pixcode" id="pixCode">${esc(codigo)}</div>
+    <ol class="passos"><li><span>Abra o app do seu banco e escolha <b>Pix › Copia e cola</b> (ou leia o QR Code).</span></li><li><span>Confira o valor de <b>${brl(valor)}</b> para <b>${esc(e.recebedor)}</b> e conclua.</span></li><li><span>Volte aqui e toque em <b>Já paguei</b> para enviar seu pedido.</span></li></ol>
+    <button class="btn g block" id="btnPaguei">Já paguei — enviar meu pedido</button>
+    <button class="btn block" data-act="fechar">Voltar</button>
+    <p class="muted small">O horário só é garantido depois que a entrada for conferida. Em caso de falta, a entrada não é devolvida.</p></div>`, sh => {
+    sh.querySelector('#btnPaguei').onclick = ev => {
+      if (!livre()){ closeSheet(); toast('Esse horário acabou de ser ocupado. Escolha outro.'); S.hora = null; renderPassos(); return; }
+      enviarPedido(id, { ...ag, entrada: { valor, percentual: pct(), forma: 'pix', status: 'informada', informadaEm: Date.now() } }, ev.currentTarget);
+    };
+  });
+  S.pixAtual = codigo;
+}
+
+async function enviarPedido(id, ag, btn){
+  const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Enviando…';
   try {
     await store.set('agendamentos', id, ag);
-    await store.set('ocupados', id, { data: S.dia, ini: S.hora, fim });
+    await store.set('ocupados', id, { data: ag.data, ini: ag.ini, fim: ag.fim });
   } catch (err) {
-    console.error(err); toast('Não consegui enviar. Tente de novo.'); btn.disabled = false; btn.textContent = 'Solicitar horário'; return;
+    console.error(err); toast('Não consegui enviar. Tente de novo.'); btn.disabled = false; btn.textContent = txt; return;
   }
-  salvarMe(nome, tel); lsSet('meusAgs', [id, ...meusIds()].slice(0, 20)); watchMeus();
-  btn.disabled = false; btn.textContent = 'Solicitar horário'; f.obs.value = '';
+  lsSet('meusAgs', [id, ...meusIds()].slice(0, 20)); watchMeus();
+  btn.disabled = false; btn.textContent = txt;
+  const f = $('#dados'); f.obs.value = ''; f.deco.value = ''; f.aceite.checked = false;
   S.serv = null; S.dia = null; S.hora = null; renderPassos();
-  const w = c.whatsapp;
-  sheet(`<div class="stack center"><div class="ok">💅</div><h2>Pedido enviado!</h2>
+  const w = S.cfg.whatsapp; const en = ag.entrada;
+  const msg = `Oi! Acabei de pedir um horário pelo link 💅\n${ag.servicoNome} · ${dataLonga(ag.data)} às ${ag.ini}\nNome: ${ag.nome}` + (ag.deco ? `\nDecoração: ${ag.deco}` : '') + (en ? `\n\nJá fiz o Pix da entrada de ${brl(en.valor)}. Segue o comprovante:` : '');
+  sheet(`<div class="stack center"><div class="ok">${natalOn() ? '🎄' : '💅'}</div><h2>Pedido enviado!</h2>
     <p class="muted">${esc(ag.servicoNome)}<br><span>${dataLonga(ag.data)}</span> às ${ag.ini}</p>
-    <p class="small">Seu horário está reservado. Assim que for confirmado, você recebe uma mensagem e vê em <b>Meus horários</b>.</p>
-    ${w ? `<a class="btn g block" target="_blank" rel="noopener" href="${waLink(w, `Oi! Acabei de pedir um horário pelo link 💅\n${ag.servicoNome} · ${dataLonga(ag.data)} às ${ag.ini}\nNome: ${ag.nome}`)}">Avisar no WhatsApp</a>` : ''}
+    <p class="small">${en ? `Recebemos seu aviso de pagamento da entrada (${brl(en.valor)}). Assim que for conferido, seu horário é confirmado e você vê em <b>Meus horários</b>.` : 'Seu horário está reservado. Assim que for confirmado, você recebe uma mensagem e vê em <b>Meus horários</b>.'}</p>
+    ${w ? `<a class="btn g block" target="_blank" rel="noopener" href="${waLink(w, msg)}">${en ? 'Enviar comprovante no WhatsApp' : 'Avisar no WhatsApp'}</a>` : ''}
     <button class="btn p block" data-act="fechar">Ok</button></div>`);
-});
+}
 
 function formEncaixe(){
   const c = S.cfg || DEFAULT_CONFIG; const sv = c.servicos || []; const m = me();
@@ -348,7 +464,7 @@ function watchMeus(){
 function renderMeus(){
   const el = $('#v-meus'); const lista = Object.values(S.meus).filter(Boolean).sort((a, b) => (b.data + b.ini).localeCompare(a.data + a.ini));
   const w = S.cfg?.whatsapp;
-  el.innerHTML = lista.length ? `<div class="card">${lista.map(a => `<div class="meu"><div><b>${esc(a.servicoNome)}</b><div class="muted small">${dataLonga(a.data)} às ${a.ini}</div></div><span class="chip ${a.status}">${LABEL[a.status] || a.status}</span></div>`).join('')}</div>
+  el.innerHTML = lista.length ? `<div class="card">${lista.map(a => `<div class="meu"><div><b>${esc(a.servicoNome)}</b><div class="muted small">${dataLonga(a.data)} às ${a.ini}</div>${a.entrada ? `<div class="small" style="margin-top:2px;color:${a.entrada.status === 'recebida' ? 'var(--green)' : 'var(--gold)'}">Entrada ${brl(a.entrada.valor)} · ${a.entrada.status === 'recebida' ? 'recebida ✓' : a.entrada.status === 'devolvida' ? 'devolvida' : 'em conferência'}</div>` : ''}</div><span class="chip ${a.status}">${LABEL[a.status] || a.status}</span></div>`).join('')}</div>
     ${w ? `<a class="btn block" target="_blank" rel="noopener" href="${waLink(w, 'Oi! Preciso falar sobre meu horário.')}">Precisa remarcar ou cancelar? Fale no WhatsApp</a>` : ''}`
     : `<div class="card center stack"><p class="muted">Você ainda não pediu horários por este aparelho.</p><button class="btn p" data-act="irAgendar">Agendar agora</button></div>`;
 }
@@ -397,12 +513,15 @@ const ACTS = {
   dia: d => { S.dia = d.d; S.hora = null; renderPassos(); },
   hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
   encaixe: () => formEncaixe(),
-  irAgendar: () => go('agendar')
+  irAgendar: () => go('agendar'),
+  regras: () => { regrasAbertas = !regrasAbertas; renderRegras(); },
+  copiarPix: () => { const c = S.pixAtual || ''; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => toast('Código Pix copiado ✓ Cole no app do banco')).catch(() => { const r = document.createRange(); r.selectNodeContents($('#pixCode')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Toque e segure para copiar'); }); }
 };
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault(); fn(t.dataset, t); });
 
 /* ================= INÍCIO ================= */
 S.tab = 'agendar';
+$('#snow').innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 47) % 100}%;width:${3 + (i % 4)}px;height:${3 + (i % 4)}px;animation-duration:${7 + (i % 5) * 1.7}s;animation-delay:-${(i * 1.3) % 9}s"></i>`).join('');
 try { await initStore(); } catch (e) { console.error(e); $('#passos').innerHTML = '<div class="card center muted">Não consegui carregar a agenda agora. Tente de novo em instantes.</div>'; }
 if (DEMO || fb){
   store.watchDoc('config', 'geral', c => {
@@ -411,9 +530,13 @@ if (DEMO || fb){
       $('#nome').textContent = S.cfg.nome; document.title = 'Agende seu horário · ' + S.cfg.nome;
       $('#boas').textContent = S.cfg.boasVindas || '';
       $('#foot').textContent = S.cfg.nome;
+      const nt = N.natal(S.cfg);
+      document.documentElement.toggleAttribute('data-natal', !!nt.ativo); try { localStorage.setItem('natalOff', nt.ativo ? '0' : '1'); } catch (e) {}
+      document.querySelector('meta[name=theme-color]').content = nt.ativo ? '#8e1620' : '#c4507a';
+      $('#xTitulo').textContent = nt.titulo || 'Agenda de Natal'; $('#xNome').textContent = S.cfg.nome; $('#xBoas').textContent = S.cfg.boasVindas || '';
       const w = S.cfg.whatsapp; const b = $('#btnWhats'); b.hidden = !w; if (w) b.href = waLink(w, 'Oi! Vim pelo link de agendamento 💅');
     }
-    renderPassos();
+    renderRegras(); renderPassos();
   });
   store.watch('ocupados', os => { S.ocup = os; renderPassos(); });
   watchMeus(); vigiarConversa();

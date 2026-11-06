@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-natal>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Júlia Marcico Nails · Painel</title>
-<meta name="theme-color" content="#c4507a">
+<meta name="theme-color" content="#8e1620">
 <meta name="robots" content="noindex">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
@@ -12,8 +12,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Great+Vibes&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script src="natal.js"></script>
+<script src="qrcode.js"></script>
+<script>try{if(localStorage.getItem("natalOff")==="1")document.documentElement.removeAttribute("data-natal")}catch(e){}</script>
 <style>
 :root{--bg:#faf6f3;--card:#fff;--ink:#2a1f24;--muted:#8b7b81;--line:#efe4e7;--rose:#c4507a;--rose-ink:#fff;--rose-soft:#f8e6ed;--green:#2e8b66;--green-soft:#e3f3ec;--red:#c2483f;--red-soft:#fae7e5;--amber:#a86d14;--amber-soft:#fbf0dc;--shadow:0 1px 2px rgba(60,20,35,.04),0 6px 18px rgba(60,20,35,.06);--r:18px}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17121a;--card:#221b25;--ink:#f3e9ee;--muted:#a8979f;--line:#352b38;--rose:#e27aa0;--rose-ink:#1b1015;--rose-soft:#3a2330;--green:#5cc497;--green-soft:#1d3229;--red:#ee7a70;--red-soft:#3b2220;--amber:#e3ac57;--amber-soft:#3a2f1c;--shadow:none}}
@@ -159,6 +162,29 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--rose
 .login .card{width:100%;max-width:380px;padding:24px}
 .err{color:var(--red);font-size:13px;font-weight:600;min-height:18px}
 .logo{width:56px;height:56px;border-radius:16px}
+
+/* ===== TEMA DE NATAL ===== */
+:root[data-natal]{--bg:#f7efe4;--card:#fffcf6;--ink:#3b1a1a;--muted:#8a6f63;--line:#ecdcc6;--rose:#9e1b24;--rose-ink:#fff8ec;--rose-soft:#f7e1d9;--green:#1f5c3f;--green-soft:#e1efe6;--gold:#b98a2e;--gold-soft:#f5e8c8;--pine:#173d2b;--shadow:0 1px 2px rgba(80,20,10,.05),0 8px 22px rgba(80,20,10,.08)}
+@media (prefers-color-scheme:dark){:root[data-natal]:not([data-theme=light]){--bg:#140f0d;--card:#201815;--ink:#f6ece0;--muted:#b09c8e;--line:#3a2c25;--rose:#e0564f;--rose-ink:#1b0d0b;--rose-soft:#3c1f1c;--green:#5fbf8f;--green-soft:#173326;--gold:#e2bd6b;--gold-soft:#3a2f1a;--pine:#0f2a1e;--shadow:none}}
+:root{--gold:#a86d14;--gold-soft:#fbf0dc;--pine:#2e8b66}
+.xk{display:none}
+[data-natal] .xk{display:inline}
+[data-natal] .top{border-top:4px solid #8e1620;box-shadow:inset 0 2px 0 #c9a24a}
+[data-natal] #nomeNegocio{font-family:"Great Vibes",cursive;font-size:22px;text-transform:none;letter-spacing:0;color:var(--gold);font-weight:400}
+[data-natal] h1#tituloView{font-family:Cinzel,Georgia,serif;letter-spacing:.02em}
+[data-natal] .kpi.big{background:radial-gradient(120% 120% at 50% 0%,#b3222c,#7d121b);border-color:#c9a24a}
+[data-natal] .fab{box-shadow:0 0 0 3px #c9a24a55,0 8px 22px rgba(142,22,32,.35)}
+[data-natal] .tabbar{border-top:2px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
+[data-natal] .login .card{border:1.5px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
+.chip.falta{background:var(--red-soft);color:var(--red)}
+.ag.falta{opacity:.62}
+.chip.ent{background:var(--gold-soft);color:var(--gold)}
+.chip.ent.ok{background:var(--green-soft);color:var(--green)}
+.deco{font-size:13px;margin-top:4px}
+.deco b{color:var(--gold)}
+.qr{width:180px;margin:0 auto;background:#fff;border-radius:12px;padding:6px;border:1px solid var(--line)}
+.qr svg{display:block;width:100%;height:auto}
+.pixcode{font:600 11px ui-monospace,monospace;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px;word-break:break-all}
 </style>
 </head>
 <body>
@@ -166,7 +192,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--rose
 <header class="top">
   <div class="top-in">
     <div>
-      <div class="k" id="nomeNegocio">Júlia Marcico Nails</div>
+      <div class="k"><span class="xk">🎄 </span><span id="nomeNegocio">Júlia Marcico Nails</span></div>
       <h1 id="tituloView">Agenda</h1>
     </div>
     <button class="btn s" data-act="copiarLink" title="Copiar link de agendamento">
@@ -199,7 +225,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--rose
 <div class="login" id="login" hidden>
   <div class="card stack">
     <img class="logo" src="icon.svg" alt="">
-    <h1>Júlia Marcico Nails</h1>
+    <h1>Júlia Marcico Nails</h1><p class="xk" style="font-family:Cinzel,serif;color:var(--gold);font-weight:700;letter-spacing:.04em">AGENDA DE NATAL</p>
     <p class="muted">Entre para ver sua agenda.</p>
     <form id="loginForm" class="stack">
       <input type="email" name="email" placeholder="E-mail" autocomplete="username" required>
@@ -319,7 +345,12 @@ function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
 /* ================= ESTADO E UI BÁSICA ================= */
 const S = { cfg: null, ags: [], enc: [], vendas: [], desp: [], convs: [], msgs: [], sel: ymd(new Date()), mes: ymd(new Date()).slice(0, 7), view: 'agenda', chat: null, draft: null, ready: false };
 const C = () => S.cfg || DEFAULT_CONFIG;
-const LABEL = { pendente: 'Aguardando', confirmado: 'Confirmado', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Recusado' };
+const LABEL = { pendente: 'Aguardando', confirmado: 'Confirmado', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Recusado', falta: 'Faltou' };
+const N = window.NATAL;
+const precoDe = s => N.precoFinal(C(), s);
+const entRecebida = a => a.entrada && a.entrada.status === 'recebida' ? Number(a.entrada.valor) || 0 : 0;
+const chipEntrada = a => !a.entrada ? '' : a.entrada.status === 'recebida' ? `<span class="chip ent ok">Entrada ${brl(a.entrada.valor)} ✓</span>` : a.entrada.status === 'devolvida' ? `<span class="chip">Entrada devolvida</span>` : `<span class="chip ent">Pix de entrada ${brl(a.entrada.valor)} · conferir</span>`;
+const decoTxt = a => a.deco ? `<div class="deco">🎨 Decoração: <b>${esc(a.deco)}</b></div>` : '';
 const FORMAS = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Débito', credito: 'Crédito' };
 const TITULOS = { agenda: 'Agenda', encaixes: 'Lista de encaixe', fin: 'Financeiro', chat: 'Mensagens', ajustes: 'Ajustes' };
 const byDT = (a, b) => (a.data + a.ini).localeCompare(b.data + b.ini);
@@ -354,9 +385,9 @@ function avisoSheet(titulo, texto, href, hrefLabel, extra){
     <button class="btn block" data-act="fechar">Fechar</button></div>`);
 }
 const quandoTxt = a => a.data === ymd(new Date()) ? 'hoje' : (() => { const t = new Date(); t.setDate(t.getDate() + 1); return a.data === ymd(t) ? 'amanhã' : dataLonga(a.data); })();
-const msgConfirmacao = a => `Oi ${pn(a.nome)}! Seu horário está confirmado 💅\n${a.servicoNome}\n${dataLonga(a.data)} às ${a.ini}\n\n${C().nome}`;
+const msgConfirmacao = a => `Oi ${pn(a.nome)}! Seu horário está confirmado ${N.natal(C()).ativo ? '🎄' : '💅'}\n${a.servicoNome}\n${dataLonga(a.data)} às ${a.ini}` + (entRecebida(a) ? `\n\nEntrada de ${brl(entRecebida(a))} recebida ✓\nRestante no dia: ${brl((Number(a.preco) || 0) - entRecebida(a))}` : '') + `\n\nLembrando: tolerância de 10 min de atraso e, em caso de falta, a entrada não é devolvida.\n\n${C().nome}`;
 const msgLembrete = a => `Oi ${pn(a.nome)}! Passando pra lembrar do seu horário ${quandoTxt(a)} às ${a.ini} (${a.servicoNome}). Te espero! 💅`;
-const msgRecusa = a => `Oi ${pn(a.nome)}! Infelizmente não consigo te atender ${dataLonga(a.data)} às ${a.ini}. Se quiser, te coloco na minha lista de encaixe e te aviso assim que abrir uma vaga 💕`;
+const msgRecusa = a => `Oi ${pn(a.nome)}! Infelizmente não consigo te atender ${dataLonga(a.data)} às ${a.ini}.` + (a.entrada ? ` Se você já fez o Pix da entrada (${brl(a.entrada.valor)}), vou te devolver.` : '') + ` Se quiser, te coloco na minha lista de encaixe e te aviso assim que abrir uma vaga 💕`;
 const msgEncaixe = e => `Oi ${pn(e.nome)}! Aqui é da ${C().nome} 💅 Abriu uma vaga de encaixe para ${e.servicoNome || 'o seu serviço'}. Ainda tem interesse? Me responde que eu te passo o horário!`;
 
 /* ================= RENDER ================= */
@@ -392,12 +423,13 @@ function cardAg(a){
   const fp = a.status === 'concluido';
   let acts = '';
   if (a.status === 'pendente') acts = `<button class="btn g s" data-act="confirmar" data-id="${a.id}">Confirmar</button><button class="btn r s" data-act="recusar" data-id="${a.id}">Recusar</button>`;
-  if (a.status === 'confirmado') acts = `<button class="btn p s" data-act="concluir" data-id="${a.id}">Finalizar e receber</button><a class="btn s" target="_blank" rel="noopener" href="${waLink(a.telefone, msgLembrete(a))}">Lembrete</a><button class="btn s ghost" data-act="cancelar" data-id="${a.id}">Cancelar</button>`;
-  if (a.status === 'cancelado') acts = `<button class="btn s ghost" data-act="excluirAg" data-id="${a.id}">Apagar</button>`;
+  if (a.status === 'confirmado') acts = `<button class="btn p s" data-act="concluir" data-id="${a.id}">Finalizar e receber</button><a class="btn s" target="_blank" rel="noopener" href="${waLink(a.telefone, msgLembrete(a))}">Lembrete</a><button class="btn s ghost" data-act="falta" data-id="${a.id}">Faltou</button><button class="btn s ghost" data-act="cancelar" data-id="${a.id}">Cancelar</button>`;
+  if (a.status === 'cancelado' || a.status === 'falta') acts = `<button class="btn s ghost" data-act="excluirAg" data-id="${a.id}">Apagar</button>`;
   return `<div class="card ag ${a.status}"><div class="hr">${a.ini}<small>${a.fim}</small></div><div>
     <div class="row between"><b>${esc(a.nome)}</b><span class="chip ${a.status}">${LABEL[a.status] || a.status}</span></div>
     <div class="muted small">${esc(a.servicoNome)} · ${brl(fp ? a.valorPago : a.preco)}${fp && a.forma ? ' · ' + FORMAS[a.forma] : ''}${a.origem === 'link' ? ' · pelo link' : ''}</div>
-    ${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
+    ${decoTxt(a)}${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
+    ${a.entrada && a.status !== 'concluido' ? `<div class="mt">${chipEntrada(a)}</div>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}</div></div>`;
 }
 function renderAgenda(){
@@ -411,7 +443,7 @@ function renderAgenda(){
     days += `<button class="day ${s === sel ? 'on' : ''} ${s === hoje ? 'today' : ''}" data-act="dia" data-d="${s}">${DIAS[i]}<b>${d.getDate()}</b><i>${n ? '•'.repeat(Math.min(n, 4)) : ''}</i></button>`;
   }
   const doDia = S.ags.filter(a => a.data === sel && a.status !== 'recusado').sort(byDT);
-  const validos = doDia.filter(a => a.status !== 'cancelado');
+  const validos = doDia.filter(a => a.status !== 'cancelado' && a.status !== 'falta');
   const previsto = validos.reduce((s, a) => s + (Number(a.status === 'concluido' ? a.valorPago : a.preco) || 0), 0);
   const h = C().horarios?.[base.getDay()];
   const fechado = !h || !h.ativo || (C().bloqueios || []).includes(sel);
@@ -419,7 +451,8 @@ function renderAgenda(){
   el.innerHTML = `
     ${pend.length ? `<div class="card pend"><div class="row between"><h3>Pedidos para aprovar</h3><span class="chip pendente">${pend.length}</span></div>
       ${pend.map(a => `<div class="pitem mt"><b>${esc(a.nome)}</b><div class="muted small">${esc(a.servicoNome)} · ${fmtCurto(a.data)} às ${a.ini} · ${brl(a.preco)}</div>
-      ${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
+      ${decoTxt(a)}${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
+      ${a.entrada ? `<div class="mt">${chipEntrada(a)}</div>` : ''}
       <div class="acts"><button class="btn g s" data-act="confirmar" data-id="${a.id}">Confirmar</button><button class="btn r s" data-act="recusar" data-id="${a.id}">Recusar</button><a class="btn s" target="_blank" rel="noopener" href="${waLink(a.telefone, 'Oi ' + pn(a.nome) + '!')}">WhatsApp</a></div></div>`).join('')}</div>` : ''}
     <div class="row between"><div class="row"><button class="btn s ghost" data-act="semana" data-n="-7" aria-label="Semana anterior">‹</button><h2 class="cap">${mesAno}</h2><button class="btn s ghost" data-act="semana" data-n="7" aria-label="Próxima semana">›</button></div>
       ${sel !== hoje ? `<button class="btn s" data-act="dia" data-d="${hoje}">Hoje</button>` : ''}</div>
@@ -435,7 +468,7 @@ function formAgendamento(pre = {}){
   sheet(`<h2>${pre.encaixeId ? 'Encaixar cliente' : 'Novo horário'}</h2><form class="mt" autocomplete="off">
     <div class="field"><label class="f">Nome da cliente</label><input name="nome" required value="${esc(pre.nome || '')}"></div>
     <div class="field"><label class="f">WhatsApp</label><input name="telefone" inputmode="tel" value="${esc(pre.telefone || '')}" placeholder="(21) 99999-9999"></div>
-    <div class="field"><label class="f">Serviço</label><select name="servico">${sv.map(s => `<option value="${s.id}" ${s.id === pre.servicoId ? 'selected' : ''}>${esc(s.nome)} · ${s.duracao} min · ${brl(s.preco)}</option>`).join('')}</select></div>
+    <div class="field"><label class="f">Serviço</label><select name="servico">${sv.map(s => `<option value="${s.id}" ${s.id === pre.servicoId ? 'selected' : ''}>${esc(s.nome)} · ${s.duracao} min · ${brl(precoDe(s))}</option>`).join('')}</select></div>
     <div class="grid2 field"><div><label class="f">Data</label><input type="date" name="data" required value="${pre.data || S.sel}"></div><div><label class="f">Horário</label><input type="time" name="hora" required value="${pre.hora || ''}"></div></div>
     <div class="field"><label class="f">Horários livres nesse dia</label><div class="slots" id="livres"></div></div>
     <div class="field"><label class="f">Observação</label><input name="obs" value="${esc(pre.obs || '')}"></div>
@@ -452,7 +485,7 @@ function formAgendamento(pre = {}){
       e.preventDefault();
       const s = sv.find(x => x.id === f.servico.value) || { id: '', nome: 'Serviço', duracao: 60, preco: 0 };
       const ini = f.hora.value; const fim = toHM(toMin(ini) + (Number(s.duracao) || 60));
-      const data = { nome: f.nome.value.trim(), telefone: f.telefone.value.trim(), servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao) || 60, preco: Number(s.preco) || 0, data: f.data.value, ini, fim, obs: f.obs.value.trim(), status: 'confirmado', origem: pre.encaixeId ? 'encaixe' : 'manual', criadoEm: Date.now() };
+      const data = { nome: f.nome.value.trim(), telefone: f.telefone.value.trim(), servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao) || 60, preco: precoDe(s), precoBase: Number(s.preco) || 0, data: f.data.value, ini, fim, obs: f.obs.value.trim(), status: 'confirmado', origem: pre.encaixeId ? 'encaixe' : 'manual', criadoEm: Date.now() };
       const conflito = agsAtivos().find(a => a.data === data.data && toMin(ini) < toMin(a.fim) && toMin(fim) > toMin(a.ini));
       if (conflito && !confirm(`Esse horário bate com ${conflito.nome} (${conflito.ini}–${conflito.fim}). Salvar mesmo assim?`)) return;
       const id = uid();
@@ -471,18 +504,31 @@ function segFormas(sel = 'pix'){
   return `<div class="seg">${Object.entries(FORMAS).map(([k, v]) => `<label><input type="radio" name="forma" value="${k}" ${k === sel ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div>`;
 }
 function formConcluir(a){
-  sheet(`<h2>Finalizar atendimento</h2><p class="muted mt">${esc(a.nome)} · ${esc(a.servicoNome)}</p><form class="mt">
-    <div class="field"><label class="f">Valor recebido (R$)</label><input name="valor" inputmode="decimal" required value="${String(a.preco ?? '').replace('.', ',')}"></div>
+  const ent = entRecebida(a); const resta = Math.max(0, (Number(a.preco) || 0) - ent);
+  sheet(`<h2>Finalizar atendimento</h2><p class="muted mt">${esc(a.nome)} · ${esc(a.servicoNome)}</p>
+    ${ent ? `<div class="note mt">Entrada de ${brl(ent)} já recebida por Pix. Falta receber ${brl(resta)}.</div>` : ''}<form class="mt">
+    <div class="field"><label class="f">${ent ? 'Valor recebido agora (restante)' : 'Valor recebido'} (R$)</label><input name="valor" inputmode="decimal" required value="${String(N.r2(resta)).replace('.', ',')}"></div>
     <div class="field"><label class="f">Forma de pagamento</label>${segFormas()}</div>
     <div class="row mt"><button type="button" class="btn" data-act="fechar">Voltar</button><button class="btn p grow">Registrar pagamento</button></div></form>`, sh => {
     const f = sh.querySelector('form');
     f.onsubmit = async e => {
       e.preventDefault(); const valor = num(f.valor.value); const forma = f.forma.value;
       await store.add('vendas', { data: a.data, descricao: a.servicoNome, tipo: 'servico', cliente: a.nome, valor, forma, agendamentoId: a.id, criadoEm: Date.now() });
-      await store.set('agendamentos', a.id, { status: 'concluido', valorPago: valor, forma });
-      closeSheet(); toast('Atendimento finalizado · ' + brl(valor));
+      await store.set('agendamentos', a.id, { status: 'concluido', valorPago: N.r2(valor + ent), forma });
+      closeSheet(); toast('Atendimento finalizado · ' + brl(valor + ent));
     };
   });
+}
+async function receberEntrada(a){
+  await store.add('vendas', { data: ymd(new Date()), descricao: a.servicoNome, tipo: 'entrada', cliente: a.nome, valor: Number(a.entrada.valor) || 0, forma: 'pix', agendamentoId: a.id, criadoEm: Date.now() });
+  const entrada = { ...a.entrada, status: 'recebida', recebidaEm: Date.now() };
+  await store.set('agendamentos', a.id, { entrada });
+  return { ...a, entrada };
+}
+async function confirmarAg(a){
+  await store.set('agendamentos', a.id, { status: 'confirmado', confirmadoEm: Date.now() });
+  const x = { ...a, status: 'confirmado' };
+  avisoSheet('Horário confirmado ✓', `${a.nome} · ${dataLonga(a.data)} às ${a.ini}`, a.telefone ? waLink(a.telefone, msgConfirmacao(x)) : null, 'Enviar confirmação no WhatsApp');
 }
 
 /* ---------- Encaixes ---------- */
@@ -530,7 +576,7 @@ function formEncaixe(){
 }
 
 /* ---------- Financeiro ---------- */
-const CATS = ['Material', 'Aluguel', 'Transporte', 'Alimentação', 'Divulgação', 'Outros'];
+const CATS = ['Material', 'Aluguel', 'Transporte', 'Alimentação', 'Divulgação', 'Devolução', 'Outros'];
 function barList(pares, red){
   const mx = Math.max(1, ...pares.map(p => p[1]));
   return pares.length ? pares.map(([l, v]) => `<div class="bl"><span class="one">${esc(l)}</span><div class="bar ${red ? 'red' : ''}"><i style="width:${(v / mx * 100).toFixed(1)}%"></i></div><b>${brl(v)}</b></div>`).join('') : '<p class="muted small">Nada registrado neste mês.</p>';
@@ -540,8 +586,8 @@ function renderFin(){
   const vs = S.vendas.filter(v => (v.data || '').startsWith(m));
   const ds = S.desp.filter(v => (v.data || '').startsWith(m));
   const ent = sum(vs), sai = sum(ds), luc = ent - sai;
-  const serv = vs.filter(v => v.tipo !== 'produto');
-  const ticket = serv.length ? sum(serv) / serv.length : 0;
+  const serv = vs.filter(v => v.tipo === 'servico');
+  const ticket = serv.length ? sum(vs.filter(v => v.tipo !== 'produto')) / serv.length : 0;
   const porForma = Object.entries(FORMAS).map(([k, l]) => [l, sum(vs.filter(v => v.forma === k))]).filter(p => p[1] > 0);
   const agrupa = (arr, key) => { const o = {}; arr.forEach(v => { const k = v[key] || 'Outros'; o[k] = (o[k] || 0) + (Number(v.valor) || 0); }); return Object.entries(o).sort((a, b) => b[1] - a[1]); };
   const [y, mm] = m.split('-').map(Number);
@@ -570,7 +616,7 @@ function renderFin(){
     <div class="card"><h3>O que mais vendeu</h3><div class="mt">${barList(agrupa(vs, 'descricao').slice(0, 6))}</div></div>
     ${ds.length ? `<div class="card"><h3>Para onde foi o dinheiro</h3><div class="mt">${barList(agrupa(ds, 'categoria'), true)}</div></div>` : ''}
     <div class="card"><h3>Movimentações</h3>
-      ${movs.length ? movs.map(x => `<div class="mov"><div style="min-width:0"><b class="one" style="display:block">${esc(x.descricao)}</b><span class="muted small">${fmtCurto(x.data)} · ${x._t === 'v' ? (FORMAS[x.forma] || '') + (x.cliente ? ' · ' + esc(x.cliente) : '') + (x.tipo === 'produto' ? ' · produto' : '') : esc(x.categoria || '')}</span></div>
+      ${movs.length ? movs.map(x => `<div class="mov"><div style="min-width:0"><b class="one" style="display:block">${esc(x.descricao)}</b><span class="muted small">${fmtCurto(x.data)} · ${x._t === 'v' ? (FORMAS[x.forma] || '') + (x.cliente ? ' · ' + esc(x.cliente) : '') + (x.tipo === 'produto' ? ' · produto' : x.tipo === 'entrada' ? ' · entrada' : '') : esc(x.categoria || '')}</span></div>
         <div class="row" style="flex-wrap:nowrap"><b class="${x._t === 'v' ? 'pos' : 'neg'}">${x._t === 'v' ? '+' : '−'}${brl(x.valor)}</b><button class="btn s ghost" data-act="delMov" data-t="${x._t}" data-id="${x.id}" aria-label="Apagar">×</button></div></div>`).join('') : '<p class="muted small mt">Sem movimentações neste mês.</p>'}</div>`;
 }
 function formVenda(){
@@ -662,6 +708,16 @@ function renderAjustes(){
   <div class="card stack"><h3>Regras do link</h3>
     <div><label class="f">Horários de quantos em quantos minutos</label><select id="aj-int">${[15, 20, 30, 45, 60].map(n => `<option value="${n}" ${Number(c.intervalo) === n ? 'selected' : ''}>${n} min</option>`).join('')}</select></div>
     <div class="grid2"><div><label class="f">Antecedência mínima (h)</label><input id="aj-ant" type="number" min="0" value="${c.antecedenciaHoras}"></div><div><label class="f">Agenda aberta (dias)</label><input id="aj-dias" type="number" min="1" max="120" value="${c.diasAFrente}"></div></div></div>
+  <div class="card stack"><h3>🎄 Natal e entrada por Pix</h3>
+    <label class="tg"><input type="checkbox" id="aj-natal" ${N.natal(c).ativo ? 'checked' : ''}>Modo Natal (visual natalino e reajuste)</label>
+    <div class="grid2"><div><label class="f">Reajuste natalino por serviço (R$)</label><input id="aj-adic" inputmode="decimal" value="${String(N.natal(c).adicional).replace('.', ',')}"></div><div><label class="f">Título no link</label><input id="aj-titulo" value="${esc(N.natal(c).titulo)}"></div></div>
+    <label class="tg"><input type="checkbox" id="aj-ent" ${N.entradaCfg(c).ativo ? 'checked' : ''}>Cobrar entrada no agendamento</label>
+    <div class="grid2"><div><label class="f">Entrada (% do valor)</label><input id="aj-pct" type="number" min="1" max="100" value="${N.entradaCfg(c).percentual}"></div><div><label class="f">Tipo da chave Pix</label><select id="aj-tipo">${[['celular', 'Celular'], ['cpf', 'CPF/CNPJ'], ['email', 'E-mail'], ['aleatoria', 'Aleatória']].map(([k, l]) => `<option value="${k}" ${N.entradaCfg(c).tipoChave === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    <div><label class="f">Sua chave Pix</label><input id="aj-chave" value="${esc(N.entradaCfg(c).chavePix)}" placeholder="Ex.: (21) 99999-9999"></div>
+    <div class="grid2"><div><label class="f">Nome de quem recebe</label><input id="aj-receb" value="${esc(N.entradaCfg(c).recebedor)}"></div><div><label class="f">Cidade</label><input id="aj-cid" value="${esc(N.entradaCfg(c).cidade)}"></div></div>
+    ${N.entradaCfg(c).ativo && !String(N.entradaCfg(c).chavePix || '').trim() ? '<div class="note">Coloque sua chave Pix para o link começar a cobrar a entrada.</div>' : ''}
+    <button class="btn s" data-act="testePix" style="align-self:flex-start">Testar Pix de R$ 1,00</button>
+    <div><label class="f">Pré-requisitos que aparecem no link (um por linha)</label><textarea id="aj-regras" rows="9">${esc(N.regras(c).join('\n'))}</textarea></div></div>
   <div class="card stack"><h3>Folgas e dias bloqueados</h3>
     <div class="row" style="flex-wrap:nowrap"><input type="date" id="novoBloq"><button class="btn s" data-act="addBloq">Bloquear</button></div>
     <div class="chips">${(c.bloqueios || []).slice().sort().map(b => `<span class="chip">${fmtCurto(b)}<button data-act="delBloq" data-b="${b}" aria-label="Desbloquear">×</button></span>`).join('') || '<span class="muted small">Nenhum dia bloqueado.</span>'}</div></div>
@@ -681,6 +737,9 @@ function lerAjustes(){
   c.intervalo = Number($('#aj-int').value) || 30;
   c.antecedenciaHoras = Math.max(0, Number($('#aj-ant').value) || 0);
   c.diasAFrente = Math.min(120, Math.max(1, Number($('#aj-dias').value) || 30));
+  c.natal = { ativo: $('#aj-natal').checked, adicional: Math.max(0, num($('#aj-adic').value)), titulo: $('#aj-titulo').value.trim() || 'Agenda de Natal' };
+  c.entrada = { ativo: $('#aj-ent').checked, percentual: Math.min(100, Math.max(1, Number($('#aj-pct').value) || 50)), tipoChave: $('#aj-tipo').value, chavePix: $('#aj-chave').value.trim(), recebedor: $('#aj-receb').value.trim() || 'Julia Marcico', cidade: $('#aj-cid').value.trim() || 'Rio de Janeiro' };
+  c.regras = $('#aj-regras').value.split('\n').map(x => x.trim()).filter(Boolean);
 }
 
 /* ================= AÇÕES (cliques) ================= */
@@ -691,8 +750,22 @@ const ACTS = {
   novo: () => formAgendamento({}),
   confirmar: async d => {
     const a = byId(d.id); if (!a) return;
-    await store.set('agendamentos', a.id, { status: 'confirmado', confirmadoEm: Date.now() });
-    avisoSheet('Horário confirmado ✓', `${a.nome} · ${dataLonga(a.data)} às ${a.ini}`, a.telefone ? waLink(a.telefone, msgConfirmacao(a)) : null, 'Enviar confirmação no WhatsApp');
+    if (a.entrada && a.entrada.status === 'informada'){
+      sheet(`<div class="stack"><h2>Conferiu o Pix?</h2><p class="muted">${esc(a.nome)} informou que pagou a entrada de <b>${brl(a.entrada.valor)}</b> (${a.entrada.percentual || 50}% de ${brl(a.preco)}). Confira no app do seu banco antes de confirmar.</p>
+        <button class="btn g block" data-act="entradaOk" data-id="${a.id}">Recebi o Pix — confirmar horário</button>
+        <a class="btn block" target="_blank" rel="noopener" href="${waLink(a.telefone, `Oi ${pn(a.nome)}! Ainda não localizei o Pix da entrada de ${brl(a.entrada.valor)} para o seu horário de ${dataLonga(a.data)} às ${a.ini}. Pode me mandar o comprovante? 💕`)}">Não achei — pedir comprovante</a>
+        <button class="btn ghost block" data-act="semEntrada" data-id="${a.id}">Confirmar sem a entrada</button>
+        <button class="btn block" data-act="fechar">Voltar</button></div>`);
+      return;
+    }
+    await confirmarAg(a);
+  },
+  entradaOk: async d => { const a = byId(d.id); if (!a) return; const x = await receberEntrada(a); await confirmarAg(x); },
+  semEntrada: async d => { const a = byId(d.id); if (!a) return; await confirmarAg(a); },
+  falta: async d => {
+    const a = byId(d.id); if (!a || !confirm(`Registrar que ${a.nome} faltou?` + (entRecebida(a) ? ` A entrada de ${brl(entRecebida(a))} fica com você.` : ''))) return;
+    await store.set('agendamentos', a.id, { status: 'falta', faltaEm: Date.now() }); await store.remove('ocupados', a.id);
+    toast('Falta registrada · horário liberado');
   },
   recusar: async d => {
     const a = byId(d.id); if (!a || !confirm(`Recusar o pedido de ${a.nome}?`)) return;
@@ -702,6 +775,11 @@ const ACTS = {
   cancelar: async d => {
     const a = byId(d.id); if (!a || !confirm(`Cancelar o horário de ${a.nome}?`)) return;
     await store.set('agendamentos', a.id, { status: 'cancelado' }); await store.remove('ocupados', a.id);
+    const ent = entRecebida(a);
+    if (ent && confirm(`A entrada de ${brl(ent)} já foi recebida. Vai devolver para ${a.nome}? (Se tocar em OK, a devolução entra como saída no financeiro.)`)){
+      await store.add('despesas', { descricao: `Devolução de entrada · ${a.nome}`, categoria: 'Devolução', valor: ent, data: ymd(new Date()), agendamentoId: a.id, criadoEm: Date.now() });
+      await store.set('agendamentos', a.id, { entrada: { ...a.entrada, status: 'devolvida', devolvidaEm: Date.now() } });
+    }
     const n = S.enc.filter(e => e.status === 'aguardando').length;
     avisoSheet('Horário liberado', n ? `Tem ${n} cliente(s) na lista de encaixe esperando uma vaga.` : 'O horário voltou a aparecer livre no link.', null, null, n ? { label: 'Ver lista de encaixe', act: 'irEncaixes' } : null);
   },
@@ -727,6 +805,16 @@ const ACTS = {
     if (!c.servicos.length) { toast('Cadastre pelo menos um serviço'); return; }
     await store.set('config', 'geral', c); toast('Ajustes salvos ✓'); renderAjustes();
   },
+  testePix: () => {
+    lerAjustes(); const c = S.draft;
+    if (!String(c.entrada.chavePix || '').trim()) { toast('Coloque sua chave Pix primeiro'); return; }
+    const cod = N.pixCodigo(c, 1, 'TESTE', 'Teste'); const qr = N.pixQrSvg(cod);
+    sheet(`<div class="stack center"><h2>Teste do Pix</h2><p class="muted small">Pague R$ 1,00 pelo app do seu banco. Se aparecer seu nome e a sua conta, está tudo certo — as clientes vão ver igual, com o valor da entrada.</p>
+      ${qr ? `<div class="qr">${qr}</div>` : ''}<div class="pixcode">${esc(cod)}</div>
+      <button class="btn p block" id="cpTeste">Copiar código</button><button class="btn block" data-act="fechar">Fechar</button></div>`, sh => {
+      sh.querySelector('#cpTeste').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(cod) : Promise.reject()).then(() => toast('Código copiado')).catch(() => prompt('Copie o código:', cod));
+    });
+  },
   notif: async () => {
     if (!('Notification' in window)) { toast('Este navegador não suporta avisos'); return; }
     const p = await Notification.requestPermission(); toast(p === 'granted' ? 'Avisos ativados ✓' : 'Avisos não permitidos');
@@ -744,7 +832,11 @@ document.addEventListener('click', e => {
 function start(){
   store.watchDoc('config', 'geral', c => {
     if (!c){ store.set('config', 'geral', DEFAULT_CONFIG); return; }
-    S.cfg = c; $('#nomeNegocio').textContent = c.nome || 'Minha agenda'; render();
+    S.cfg = c; $('#nomeNegocio').textContent = c.nome || 'Minha agenda';
+    const on = !!N.natal(c).ativo; document.documentElement.toggleAttribute('data-natal', on);
+    try { localStorage.setItem('natalOff', on ? '0' : '1'); } catch (e) {}
+    document.querySelector('meta[name=theme-color]').content = on ? '#8e1620' : '#c4507a';
+    render();
   });
   store.watch('agendamentos', x => { S.ags = x; render(); });
   store.watch('encaixes', x => { S.enc = x; render(); });
@@ -763,14 +855,14 @@ function seedDemo(){
   lsSet('demo:seeded', 1);
   const t = new Date(); const d = n => { const x = new Date(t); x.setDate(t.getDate() + n); return ymd(x); };
   const sv = DEFAULT_CONFIG.servicos;
-  store.set('config', 'geral', DEFAULT_CONFIG);
+  store.set('config', 'geral', { ...DEFAULT_CONFIG, ...N.PADRAO, entrada: { ...N.PADRAO.entrada, tipoChave: 'email', chavePix: 'exemplo@juliamarcico.com' } });
   const ag = (id, nome, tel, s, data, ini, status, extra = {}) => {
     const fim = toHM(toMin(ini) + s.duracao);
     store.set('agendamentos', id, { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: s.duracao, preco: s.preco, data, ini, fim, obs: '', status, origem: 'link', criadoEm: Date.now(), ...extra });
     if (status === 'pendente' || status === 'confirmado') store.set('ocupados', id, { data, ini, fim });
   };
   ag('d1', 'Carla Souza', '21988887777', sv[2], d(0), '09:00', 'confirmado');
-  ag('d2', 'Bianca Lima', '21977776666', sv[3], d(0), '14:00', 'pendente', { obs: 'Quero um nude rosado' });
+  ag('d2', 'Bianca Lima', '21977776666', sv[3], d(0), '14:00', 'pendente', { preco: 70, deco: 'Vermelho com floco de neve dourado', entrada: { valor: 35, percentual: 50, forma: 'pix', status: 'informada', informadaEm: Date.now() } });
   ag('d3', 'Renata Alves', '21966665555', sv[4], d(1), '10:00', 'confirmado', { origem: 'manual' });
   ag('d4', 'Paula Rocha', '21955554444', sv[0], d(-1), '16:00', 'concluido', { valorPago: 35, forma: 'pix' });
   store.add('encaixes', { nome: 'Fernanda Dias', telefone: '21944443333', servicoId: 's2', servicoNome: 'Pé', dias: ['sex', 'sáb'], periodo: 'tarde', obs: '', status: 'aguardando', origem: 'link', criadoEm: Date.now() - 2 * 864e5 });
