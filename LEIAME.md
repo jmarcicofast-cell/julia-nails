@@ -70,3 +70,13 @@ Ficará assim:
 - Melhor opção: um link com o valor exato da entrada de cada serviço (o painel mostra o valor ao lado de cada campo). Se a plataforma só tiver link de valor livre, use o "link geral": a cliente é avisada para digitar o valor.
 - A cliente escolhe Pix ou Cartão na tela de pagamento. No painel aparece "Cartão de entrada · conferir"; confira nas vendas da plataforma e toque em "Recebi". A entrada vai para o financeiro como Crédito.
 - Se mudar o preço ou a % da entrada, lembre de criar links novos com o valor certo.
+
+## Horários pela duração do serviço
+- Em Ajustes › Regras do link › "Horários de quantos em quantos minutos", a opção padrão agora é **Pela duração do serviço escolhido**.
+- Exemplo: Pé e mão (90 min) aparece 09:00, 10:30, 12:00…; Mão (45 min) aparece 09:00, 09:45, 10:30…
+- Se esbarrar na pausa ou em outro atendimento, o próximo horário começa logo depois dele.
+- Quem preferir o jeito antigo pode escolher "A cada 15/20/30/45/60 min".
+
+## Calendário e Mamãe Noel
+- O dia agora é escolhido num calendário do mês (com setas para o mês seguinte). O pontinho verde marca os dias com horário livre.
+- No modo Natal, aparecem ilustrações animadas da Júlia de Mamãe Noel (topo do link, pedido enviado e dia sem vaga). As cores de cabelo e pele ficam no começo do arquivo mamae-noel.js.

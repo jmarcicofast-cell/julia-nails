@@ -15,6 +15,7 @@
 <script src="natal.js"></script>
 <script src="recompensas.js"></script>
 <script src="qrcode.js"></script>
+<script src="mamae-noel.js"></script>
 <script>try{if(localStorage.getItem("natalOff")==="1")document.documentElement.removeAttribute("data-natal")}catch(e){}</script>
 <style>
 :root{--bg:#faf6f3;--card:#fff;--ink:#2a1f24;--muted:#8b7b81;--line:#efe4e7;--rose:#c4507a;--rose-ink:#fff;--rose-soft:#f8e6ed;--green:#2e8b66;--green-soft:#e3f3ec;--red:#c2483f;--red-soft:#fae7e5;--amber:#a86d14;--amber-soft:#fbf0dc;--shadow:0 1px 2px rgba(60,20,35,.04),0 6px 18px rgba(60,20,35,.06);--r:18px}
@@ -75,6 +76,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 .dd.on{background:var(--rose);border-color:var(--rose);color:var(--rose-ink)}
 .dd.on b{color:var(--rose-ink)}
 .dd:disabled{opacity:.35;cursor:default}
+.cal-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cal-h b{font-family:Fraunces,serif;font-size:18px}
+.cal-h button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:700 16px Manrope,sans-serif;cursor:pointer}
+.cal-h button:disabled{opacity:.3;cursor:default}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .wd{font:700 11px Manrope,sans-serif;color:var(--muted);padding:4px 0;text-transform:uppercase}
+.cal .cd{aspect-ratio:1;border:1px solid transparent;background:var(--bg);border-radius:12px;font:700 15px Manrope,sans-serif;color:var(--ink);cursor:pointer;position:relative;padding:0}
+.cal .cd.livre:after{content:"";position:absolute;left:50%;bottom:5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--green)}
+.cal .cd.hoje{border-color:var(--rose)}
+.cal .cd.on{background:var(--rose);color:var(--rose-ink);border-color:var(--rose)}
+.cal .cd.on:after{background:var(--rose-ink)}
+.cal .cd:disabled{opacity:.28;cursor:default;background:transparent}
+.cal .vz{aspect-ratio:1}
+.cal-leg{display:flex;gap:14px;font-size:12px;color:var(--muted);align-items:center}
+.cal-leg i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px}
 .slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .slot{border:1px solid var(--line);background:var(--bg);border-radius:11px;padding:10px 0;font:700 14px Manrope,sans-serif;color:var(--ink);cursor:pointer}
 .slot.on{background:var(--rose);color:var(--rose-ink);border-color:var(--rose)}
@@ -108,6 +124,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 .xmas{display:none}
 [data-natal] .xmas{display:block}
 [data-natal] .hero-std{display:none}
+.xhero #mnHero{position:relative;z-index:1}
 .xhero{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#b3222c 0%,#8e1620 55%,#6d0f17 100%);color:#fff6e6;text-align:center;padding:calc(64px + env(safe-area-inset-top)) 20px 34px;border-bottom:3px solid #c9a24a}
 .xhero .t{font-family:Cinzel,Georgia,serif;font-weight:700;font-size:clamp(30px,9vw,46px);line-height:1;letter-spacing:.02em;background:linear-gradient(180deg,#f8e3a6 0%,#e0b65a 45%,#b98a2e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(0,0,0,.08)}
 .xhero .n{font-family:"Great Vibes",cursive;font-size:34px;line-height:1.1;color:#f3d58c;margin-top:8px}
@@ -212,6 +229,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
   <div class="bolas e"><span><i style="--c:#d4a23a"></i></span><span><i style="--c:#c3202b"></i></span></div>
   <div class="bolas d"><span><i style="--c:#2c7a50"></i></span><span><i style="--c:#d4a23a"></i></span></div>
   <span class="flk" style="left:50%;transform:translateX(-50%);top:calc(16px + env(safe-area-inset-top));font-size:26px">✻</span>
+  <div id="mnHero"></div>
   <div class="t" id="xTitulo">Agenda de Natal</div>
   <div class="n" id="xNome">Júlia Marcico Nails</div>
   <div class="sep">♥</div>
@@ -345,14 +363,29 @@ function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
   const d = parseYmd(dataStr); const h = cfg.horarios?.[d.getDay()];
   if (!h || !h.ativo || (cfg.bloqueios || []).includes(dataStr)) return [];
   const ini = toMin(h.ini), fim = toMin(h.fim), step = Number(cfg.intervalo) || 30;
+  const porServico = cfg.passoServico !== false;
   const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
   const occ = ocupados.filter(o => o.data === dataStr).map(o => [toMin(o.ini), toMin(o.fim)]);
   const limite = Date.now() + (Number(antecH) || 0) * 3600e3;
   const out = [];
+  const blocos = (pI != null ? [[pI, pF]] : []).concat(occ);
+  if (porServico){
+    // Horários seguidos pela duração do serviço: 09:00, 10:30, 12:00… (Pé e mão, 90 min).
+    // Se esbarrar numa pausa ou atendimento, recomeça logo depois dele.
+    let t = ini;
+    while (t + dur <= fim){
+      const e = t + dur;
+      const bate = blocos.filter(([a, b]) => t < b && e > a);
+      if (bate.length){ t = Math.max(...bate.map(([, b]) => b)); continue; }
+      const dt = new Date(d); dt.setHours(0, t, 0, 0);
+      if (dt.getTime() >= limite) out.push(toHM(t));
+      t += dur;
+    }
+    return out;
+  }
   for (let t = ini; t + dur <= fim; t += step){
     const e = t + dur;
-    if (pI != null && t < pF && e > pI) continue;
-    if (occ.some(([a, b]) => t < b && e > a)) continue;
+    if (blocos.some(([a, b]) => t < b && e > a)) continue;
     const dt = new Date(d); dt.setHours(0, t, 0, 0);
     if (dt.getTime() < limite) continue;
     out.push(toHM(t));
@@ -407,6 +440,24 @@ function diasDisponiveis(){
   for (let i = 0; i < n; i++){ const d = new Date(t); d.setDate(t.getDate() + i); out.push(ymd(d)); }
   return out;
 }
+function calendario(dias){
+  if (!dias.length) return '';
+  const mapa = Object.fromEntries(dias.map(x => [x.d, x.livres]));
+  const meses = [...new Set(dias.map(x => x.d.slice(0, 7)))];
+  if (!S.mes || !meses.includes(S.mes)) S.mes = (S.dia && meses.includes(S.dia.slice(0, 7))) ? S.dia.slice(0, 7) : meses[0];
+  const i = meses.indexOf(S.mes); const p = parseYmd(S.mes + '-01');
+  const nome = (m => m.charAt(0).toUpperCase() + m.slice(1))(p.toLocaleDateString('pt-BR', { month: 'long' })) + ' de ' + p.getFullYear();
+  const total = new Date(p.getFullYear(), p.getMonth() + 1, 0).getDate(); const hoje = ymd(new Date());
+  let cel = '';
+  for (let k = 0; k < p.getDay(); k++) cel += '<span class="vz"></span>';
+  for (let dd = 1; dd <= total; dd++){
+    const d = `${S.mes}-${pad(dd)}`; const tem = d in mapa; const livre = tem && mapa[d] > 0;
+    cel += `<button class="cd ${livre ? 'livre' : ''} ${d === S.dia ? 'on' : ''} ${d === hoje ? 'hoje' : ''}" data-act="dia" data-d="${d}" ${livre ? '' : 'disabled'} aria-label="${dataLonga(d)}${livre ? '' : ' (sem horário)'}">${dd}</button>`;
+  }
+  return `<div class="cal-h"><button data-act="mes" data-n="-1" ${i > 0 ? '' : 'disabled'} aria-label="Mês anterior">‹</button><b>${nome}</b><button data-act="mes" data-n="1" ${i < meses.length - 1 ? '' : 'disabled'} aria-label="Próximo mês">›</button></div>
+    <div class="cal">${['D','S','T','Q','Q','S','S'].map(x => `<span class="wd">${x}</span>`).join('')}${cel}</div>
+    <div class="cal-leg"><span><i></i>tem horário livre</span></div>`;
+}
 function renderPassos(){
   const c = S.cfg; const el = $('#passos');
   if (!c){ el.innerHTML = '<div class="card center muted">Agenda em configuração. Volte em breve 💕</div>'; return; }
@@ -418,9 +469,9 @@ function renderPassos(){
   <div class="card stack"><div class="step"><span>1</span><h3>Escolha o serviço</h3></div>
     <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(precoDe(x))}</b></button>`).join('')}</div></div>
   <div class="card stack ${s ? '' : 'dim'}"><div class="step"><span>2</span><h3>Escolha o dia</h3></div>
-    <div class="dstrip" id="dstrip">${dias.map(({ d, livres }) => { const x = parseYmd(d); return `<button class="dd ${d === S.dia ? 'on' : ''}" data-act="dia" data-d="${d}" ${livres ? '' : 'disabled'}>${DIAS[x.getDay()]}<b>${x.getDate()}</b>${x.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</button>`; }).join('')}</div></div>
+    ${calendario(dias)}</div>
   <div class="card stack ${s && S.dia ? '' : 'dim'}"><div class="step"><span>3</span><h3>Escolha o horário</h3></div>
-    ${!S.dia ? '<p class="muted small">Escolha um dia para ver os horários.</p>' : slots.length ? `<div class="slots">${slots.map(h => `<button class="slot ${h === S.hora ? 'on' : ''}" data-act="hora" data-h="${h}">${h}</button>`).join('')}</div>` : '<p class="muted small">Sem horários livres nesse dia. Tente outro dia ou entre na lista de encaixe abaixo.</p>'}</div>`;
+    ${!S.dia ? '<p class="muted small">Escolha um dia para ver os horários.</p>' : slots.length ? `<div class="slots">${slots.map(h => `<button class="slot ${h === S.hora ? 'on' : ''}" data-act="hora" data-h="${h}">${h}</button>`).join('')}</div>` : `<div style="display:flex;gap:10px;align-items:center">${natalOn() ? MamaeNoel.mini() : ''}<p class="muted small">Sem horários livres nesse dia. Tente outro dia ou entre na lista de encaixe abaixo.</p></div>`}</div>`;
   const form = $('#dados');
   form.hidden = !(s && S.dia && S.hora);
   if (!form.hidden){
@@ -432,7 +483,6 @@ function renderPassos(){
     $('#btnEnviar').textContent = en ? 'Continuar para pagar a entrada' : 'Solicitar horário';
     $('#dadosNota').textContent = en ? `No próximo passo você paga a entrada ${N.temPix(c) && N.linkCartao(c, s.id) ? 'por Pix ou cartão' : N.temPix(c) ? 'por Pix' : 'no cartão'} aqui mesmo, e o horário fica reservado.` : 'O horário fica reservado e a confirmação chega pelo WhatsApp.';
   }
-  const on = $('#dstrip .dd.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
 
 $('#dados').addEventListener('submit', async e => {
@@ -501,7 +551,7 @@ async function enviarPedido(id, ag, btn){
   S.serv = null; S.dia = null; S.hora = null; S.recSel = ''; renderPassos();
   const w = S.cfg.whatsapp; const en = ag.entrada;
   const msg = `Oi! Acabei de pedir um horário pelo link 💅\n${ag.servicoNome} · ${dataLonga(ag.data)} às ${ag.ini}\nNome: ${ag.nome}` + (ag.deco ? `\nDecoração: ${ag.deco}` : '') + (en ? `\n\nJá paguei a entrada de ${brl(en.valor)} no ${en.forma === 'cartao' ? 'cartão' : 'Pix'}. Segue o comprovante:` : '');
-  sheet(`<div class="stack center"><div class="ok">${natalOn() ? '🎄' : '💅'}</div><h2>Pedido enviado!</h2>
+  sheet(`<div class="stack center">${natalOn() ? MamaeNoel.comemorando() : '<div class="ok">💅</div>'}<h2>Pedido enviado!</h2>
     <p class="muted">${esc(ag.servicoNome)}<br><span>${dataLonga(ag.data)}</span> às ${ag.ini}</p>
     <p class="small">${en ? `Recebemos seu aviso de pagamento da entrada (${brl(en.valor)}). Assim que for conferido, seu horário é confirmado e você vê em <b>Meus horários</b>.` : 'Seu horário está reservado. Assim que for confirmado, você recebe uma mensagem e vê em <b>Meus horários</b>.'}</p>
     ${recOn() ? `<p class="small" style="color:var(--gold);font-weight:700">⭐ Você ganha +${R.cfgDe(S.cfg).porAtendimento + (natalOn() ? R.cfgDe(S.cfg).bonusNatal : 0)} estrelinhas quando concluir este atendimento!${ag.recompensa ? `<br>🎁 Prêmio pedido: ${esc(ag.recompensa.nome)}` : ''}</p>` : ''}
@@ -660,6 +710,7 @@ const ACTS = {
   fechar: () => closeSheet(),
   serv: d => { S.serv = d.id; S.hora = null; renderPassos(); },
   dia: d => { S.dia = d.d; S.hora = null; renderPassos(); },
+  mes: d => { const ms = [...new Set(diasDisponiveis().map(x => x.slice(0, 7)))]; const i = ms.indexOf(S.mes) + Number(d.n); if (ms[i]) { S.mes = ms[i]; renderPassos(); } },
   hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
   encaixe: () => formEncaixe(),
   irAgendar: () => go('agendar'),
@@ -673,6 +724,7 @@ document.addEventListener('click', e => { const t = e.target.closest('[data-act]
 /* ================= INÍCIO ================= */
 S.tab = 'agendar';
 $('#luzes').innerHTML = (() => { const n = 14, cores = ['#e23b3b', '#f2c14e', '#3fae6a', '#4aa3df']; let b = '', d = 'M0 4'; for (let i = 0; i < n; i++){ const x = 14 + i * (372 / (n - 1)); const y = i % 2 ? 13 : 6; d += ` L${x.toFixed(1)} ${y}`; b += `<g class="b"><rect x="${(x - 2).toFixed(1)}" y="${y}" width="4" height="4" rx="1" fill="#2a3b2f"/><ellipse cx="${x.toFixed(1)}" cy="${y + 10}" rx="4.2" ry="6.5" fill="${cores[i % 4]}"/></g>`; } return `<svg viewBox="0 0 400 30" preserveAspectRatio="xMidYMin slice"><path d="${d} L400 4" fill="none" stroke="#2a3b2f" stroke-width="1.4" stroke-linejoin="round"/>${b}</svg>`; })();
+$('#mnHero').innerHTML = MamaeNoel.acenando();
 $('#snow').innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 47) % 100}%;width:${3 + (i % 4)}px;height:${3 + (i % 4)}px;animation-duration:${7 + (i % 5) * 1.7}s;animation-delay:-${(i * 1.3) % 9}s"></i>`).join('');
 try { await initStore(); } catch (e) { console.error(e); $('#passos').innerHTML = '<div class="card center muted">Não consegui carregar a agenda agora. Tente de novo em instantes.</div>'; }
 if (DEMO || fb){

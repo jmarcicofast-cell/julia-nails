@@ -328,14 +328,29 @@ function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
   const d = parseYmd(dataStr); const h = cfg.horarios?.[d.getDay()];
   if (!h || !h.ativo || (cfg.bloqueios || []).includes(dataStr)) return [];
   const ini = toMin(h.ini), fim = toMin(h.fim), step = Number(cfg.intervalo) || 30;
+  const porServico = cfg.passoServico !== false;
   const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
   const occ = ocupados.filter(o => o.data === dataStr).map(o => [toMin(o.ini), toMin(o.fim)]);
   const limite = Date.now() + (Number(antecH) || 0) * 3600e3;
   const out = [];
+  const blocos = (pI != null ? [[pI, pF]] : []).concat(occ);
+  if (porServico){
+    // Horários seguidos pela duração do serviço: 09:00, 10:30, 12:00… (Pé e mão, 90 min).
+    // Se esbarrar numa pausa ou atendimento, recomeça logo depois dele.
+    let t = ini;
+    while (t + dur <= fim){
+      const e = t + dur;
+      const bate = blocos.filter(([a, b]) => t < b && e > a);
+      if (bate.length){ t = Math.max(...bate.map(([, b]) => b)); continue; }
+      const dt = new Date(d); dt.setHours(0, t, 0, 0);
+      if (dt.getTime() >= limite) out.push(toHM(t));
+      t += dur;
+    }
+    return out;
+  }
   for (let t = ini; t + dur <= fim; t += step){
     const e = t + dur;
-    if (pI != null && t < pF && e > pI) continue;
-    if (occ.some(([a, b]) => t < b && e > a)) continue;
+    if (blocos.some(([a, b]) => t < b && e > a)) continue;
     const dt = new Date(d); dt.setHours(0, t, 0, 0);
     if (dt.getTime() < limite) continue;
     out.push(toHM(t));
@@ -720,7 +735,8 @@ function renderAjustes(){
       <div class="hfields"><input type="time" data-k="ini" value="${h.ini || '09:00'}"><span>às</span><input type="time" data-k="fim" value="${h.fim || '18:00'}"></div>
       <div class="hfields"><span>Pausa</span><input type="time" data-k="pIni" value="${h.pIni || ''}"><span>às</span><input type="time" data-k="pFim" value="${h.pFim || ''}"></div></div>`; }).join('')}</div>
   <div class="card stack"><h3>Regras do link</h3>
-    <div><label class="f">Horários de quantos em quantos minutos</label><select id="aj-int">${[15, 20, 30, 45, 60].map(n => `<option value="${n}" ${Number(c.intervalo) === n ? 'selected' : ''}>${n} min</option>`).join('')}</select></div>
+    <div><label class="f">Horários de quantos em quantos minutos</label><select id="aj-int"><option value="servico" ${c.passoServico !== false ? 'selected' : ''}>Pela duração do serviço escolhido</option>${[15, 20, 30, 45, 60].map(n => `<option value="${n}" ${c.passoServico === false && Number(c.intervalo) === n ? 'selected' : ''}>A cada ${n} min</option>`).join('')}</select>
+      <p class="muted small" style="margin-top:4px">Pela duração: Pé e mão (90 min) aparece 09:00, 10:30, 12:00… Mão (45 min) aparece 09:00, 09:45, 10:30…</p></div>
     <div class="grid2"><div><label class="f">Antecedência mínima (h)</label><input id="aj-ant" type="number" min="0" value="${c.antecedenciaHoras}"></div><div><label class="f">Agenda aberta (dias)</label><input id="aj-dias" type="number" min="1" max="120" value="${c.diasAFrente}"></div></div></div>
   <div class="card stack"><h3>🎄 Natal e entrada (Pix ou cartão)</h3>
     <label class="tg"><input type="checkbox" id="aj-natal" ${N.natal(c).ativo ? 'checked' : ''}>Modo Natal (visual natalino e reajuste)</label>
@@ -758,7 +774,7 @@ function lerAjustes(){
   c.servicos = [...v.querySelectorAll('.serv')].map((r, i) => ({ id: c.servicos[i]?.id || uid(), nome: r.querySelector('[data-k=nome]').value.trim(), duracao: Number(r.querySelector('[data-k=duracao]').value) || 30, preco: num(r.querySelector('[data-k=preco]').value) }));
   c.horarios = {};
   v.querySelectorAll('.hrow').forEach(r => { const g = k => r.querySelector(`[data-k=${k}]`); c.horarios[r.dataset.d] = { ativo: g('ativo').checked, ini: g('ini').value || '09:00', fim: g('fim').value || '18:00', pIni: g('pIni').value || '', pFim: g('pFim').value || '' }; });
-  c.intervalo = Number($('#aj-int').value) || 30;
+  { const v = $('#aj-int').value; c.passoServico = v === 'servico'; if (v !== 'servico') c.intervalo = Number(v) || 30; }
   c.antecedenciaHoras = Math.max(0, Number($('#aj-ant').value) || 0);
   c.diasAFrente = Math.min(120, Math.max(1, Number($('#aj-dias').value) || 30));
   c.natal = { ativo: $('#aj-natal').checked, adicional: Math.max(0, num($('#aj-adic').value)), titulo: $('#aj-titulo').value.trim() || 'Agenda de Natal' };
