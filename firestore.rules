@@ -30,6 +30,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Perfil de recompensas: a cliente lê só o dela (pelo WhatsApp); só a Júlia grava
+    match /perfis/{id} {
+      allow get: if true;
+      allow list, write: if isAdmin();
+    }
+
     // Lista de encaixe: cliente só entra na lista; só a Júlia vê
     match /encaixes/{id} {
       allow create: if true;

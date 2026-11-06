@@ -57,3 +57,10 @@ Ficará assim:
 - "Faltou" registra a falta e libera o horário (a entrada fica com ela). "Cancelar" pergunta se vai devolver a entrada e lança a devolução como saída.
 - Use "Testar Pix de R$ 1,00" para conferir se a chave está certa antes de divulgar.
 - Depois do Natal: desmarque "Modo Natal" e o app volta ao visual rosa, sem o reajuste.
+
+## ⭐ Recompensas das clientes (perfil, emblemas e mimos)
+- **Antes de usar, publique as regras novas**: Firebase › Firestore › Regras → cole de novo o `firestore.rules` (ganhou o bloco `perfis`) → Publicar.
+- A cliente abre a aba **Perfil** no link, coloca o WhatsApp e vê nível, estrelinhas, emblemas e os mimos que pode trocar.
+- Cada atendimento concluído vale +10⭐ (+5⭐ de bônus no Natal). Emblemas: primeira reserva, estreia, unhas de Natal, Pix em dia, exploradora, de volta no mês, cliente fiel, sempre presente e rainha das unhas.
+- Ao agendar, ela escolhe o mimo se tiver estrelas. No painel aparece "🎁 Quer usar" com o saldo dela; no "Finalizar e receber" a Júlia marca se aplicou (prêmio de "R$ de desconto" já abate do valor).
+- Em **Ajustes › Recompensas** dá para mudar as estrelas por atendimento, o bônus de Natal e a lista de mimos (`estrelas | prêmio`, um por linha).

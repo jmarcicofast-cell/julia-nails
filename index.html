@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Great+Vibes&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
 <script src="natal.js"></script>
+<script src="recompensas.js"></script>
 <script src="qrcode.js"></script>
 <script>try{if(localStorage.getItem("natalOff")==="1")document.documentElement.removeAttribute("data-natal")}catch(e){}</script>
 <style>
@@ -268,9 +269,9 @@ const store = {
     if (DEMO){ const c = demoCol(path); delete c[id]; demoSave(path, c); return; }
     await fb.f.deleteDoc(fb.f.doc(fb.db, path, id));
   },
-  watch(path, cb){
+  watch(path, cb, onErr){
     if (DEMO) return onBus(() => cb(Object.entries(demoCol(path)).map(([id, d]) => ({ id, ...d }))));
-    return fb.f.onSnapshot(fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => console.error(path, e));
+    return fb.f.onSnapshot(fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => { console.error(path, e); onErr && onErr(e); });
   },
   watchDoc(path, id, cb){
     if (DEMO) return onBus(() => { const d = demoCol(path)[id]; cb(d ? { id, ...d } : null); });
@@ -343,13 +344,22 @@ function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
 }
 
 /* ================= ESTADO E UI BÁSICA ================= */
-const S = { cfg: null, ags: [], enc: [], vendas: [], desp: [], convs: [], msgs: [], sel: ymd(new Date()), mes: ymd(new Date()).slice(0, 7), view: 'agenda', chat: null, draft: null, ready: false };
+const S = { perfis: null, perfisErr: false, cfg: null, ags: [], enc: [], vendas: [], desp: [], convs: [], msgs: [], sel: ymd(new Date()), mes: ymd(new Date()).slice(0, 7), view: 'agenda', chat: null, draft: null, ready: false };
 const C = () => S.cfg || DEFAULT_CONFIG;
 const LABEL = { pendente: 'Aguardando', confirmado: 'Confirmado', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Recusado', falta: 'Faltou' };
 const N = window.NATAL;
 const precoDe = s => N.precoFinal(C(), s);
 const entRecebida = a => a.entrada && a.entrada.status === 'recebida' ? Number(a.entrada.valor) || 0 : 0;
 const chipEntrada = a => !a.entrada ? '' : a.entrada.status === 'recebida' ? `<span class="chip ent ok">Entrada ${brl(a.entrada.valor)} ✓</span>` : a.entrada.status === 'devolvida' ? `<span class="chip">Entrada devolvida</span>` : `<span class="chip ent">Pix de entrada ${brl(a.entrada.valor)} · conferir</span>`;
+const R = window.RECOMP;
+const recOn = () => R.cfgDe(C()).ativo;
+const perfilDe = tel => { const k = R.chave(tel); return k ? R.calcular(S.ags.filter(a => R.chave(a.telefone) === k), C()) : null; };
+const recTxt = a => {
+  if (!a.recompensa || !recOn()) return '';
+  const p = perfilDe(a.telefone); const saldo = p ? p.estrelas : 0; const custo = Number(a.recompensa.custo) || 0;
+  const falta = a.status !== 'concluido' && saldo < custo;
+  return `<div class="deco">🎁 ${a.status === 'concluido' ? (a.recompensa.aplicada ? 'Usou' : 'Não usou') : 'Quer usar'}: <b>${esc(a.recompensa.nome)}</b> (${custo}⭐)${a.status !== 'concluido' ? ` · saldo ${saldo}⭐` : ''}${falta ? ' <span style="color:var(--red);font-weight:700">· estrelas insuficientes</span>' : ''}</div>`;
+};
 const decoTxt = a => a.deco ? `<div class="deco">🎨 Decoração: <b>${esc(a.deco)}</b></div>` : '';
 const FORMAS = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Débito', credito: 'Crédito' };
 const TITULOS = { agenda: 'Agenda', encaixes: 'Lista de encaixe', fin: 'Financeiro', chat: 'Mensagens', ajustes: 'Ajustes' };
@@ -428,7 +438,7 @@ function cardAg(a){
   return `<div class="card ag ${a.status}"><div class="hr">${a.ini}<small>${a.fim}</small></div><div>
     <div class="row between"><b>${esc(a.nome)}</b><span class="chip ${a.status}">${LABEL[a.status] || a.status}</span></div>
     <div class="muted small">${esc(a.servicoNome)} · ${brl(fp ? a.valorPago : a.preco)}${fp && a.forma ? ' · ' + FORMAS[a.forma] : ''}${a.origem === 'link' ? ' · pelo link' : ''}</div>
-    ${decoTxt(a)}${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
+    ${decoTxt(a)}${recTxt(a)}${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
     ${a.entrada && a.status !== 'concluido' ? `<div class="mt">${chipEntrada(a)}</div>` : ''}
     ${acts ? `<div class="acts">${acts}</div>` : ''}</div></div>`;
 }
@@ -451,7 +461,7 @@ function renderAgenda(){
   el.innerHTML = `
     ${pend.length ? `<div class="card pend"><div class="row between"><h3>Pedidos para aprovar</h3><span class="chip pendente">${pend.length}</span></div>
       ${pend.map(a => `<div class="pitem mt"><b>${esc(a.nome)}</b><div class="muted small">${esc(a.servicoNome)} · ${fmtCurto(a.data)} às ${a.ini} · ${brl(a.preco)}</div>
-      ${decoTxt(a)}${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
+      ${decoTxt(a)}${recTxt(a)}${a.obs ? `<div class="obs">“${esc(a.obs)}”</div>` : ''}
       ${a.entrada ? `<div class="mt">${chipEntrada(a)}</div>` : ''}
       <div class="acts"><button class="btn g s" data-act="confirmar" data-id="${a.id}">Confirmar</button><button class="btn r s" data-act="recusar" data-id="${a.id}">Recusar</button><a class="btn s" target="_blank" rel="noopener" href="${waLink(a.telefone, 'Oi ' + pn(a.nome) + '!')}">WhatsApp</a></div></div>`).join('')}</div>` : ''}
     <div class="row between"><div class="row"><button class="btn s ghost" data-act="semana" data-n="-7" aria-label="Semana anterior">‹</button><h2 class="cap">${mesAno}</h2><button class="btn s ghost" data-act="semana" data-n="7" aria-label="Próxima semana">›</button></div>
@@ -504,9 +514,11 @@ function segFormas(sel = 'pix'){
   return `<div class="seg">${Object.entries(FORMAS).map(([k, v]) => `<label><input type="radio" name="forma" value="${k}" ${k === sel ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div>`;
 }
 function formConcluir(a){
-  const ent = entRecebida(a); const resta = Math.max(0, (Number(a.preco) || 0) - ent);
+  const rec = recOn() && a.recompensa ? a.recompensa : null; const desc = rec ? R.desconto(rec.nome) : 0;
+  const ent = entRecebida(a); const resta = Math.max(0, (Number(a.preco) || 0) - ent - desc);
   sheet(`<h2>Finalizar atendimento</h2><p class="muted mt">${esc(a.nome)} · ${esc(a.servicoNome)}</p>
     ${ent ? `<div class="note mt">Entrada de ${brl(ent)} já recebida por Pix. Falta receber ${brl(resta)}.</div>` : ''}<form class="mt">
+    ${rec ? `<label class="tg field" style="font-weight:600"><input type="checkbox" name="rec" checked>🎁 Aplicar recompensa: ${esc(rec.nome)} (${rec.custo}⭐)</label>` : ''}
     <div class="field"><label class="f">${ent ? 'Valor recebido agora (restante)' : 'Valor recebido'} (R$)</label><input name="valor" inputmode="decimal" required value="${String(N.r2(resta)).replace('.', ',')}"></div>
     <div class="field"><label class="f">Forma de pagamento</label>${segFormas()}</div>
     <div class="row mt"><button type="button" class="btn" data-act="fechar">Voltar</button><button class="btn p grow">Registrar pagamento</button></div></form>`, sh => {
@@ -514,8 +526,10 @@ function formConcluir(a){
     f.onsubmit = async e => {
       e.preventDefault(); const valor = num(f.valor.value); const forma = f.forma.value;
       await store.add('vendas', { data: a.data, descricao: a.servicoNome, tipo: 'servico', cliente: a.nome, valor, forma, agendamentoId: a.id, criadoEm: Date.now() });
-      await store.set('agendamentos', a.id, { status: 'concluido', valorPago: N.r2(valor + ent), forma });
-      closeSheet(); toast('Atendimento finalizado · ' + brl(valor + ent));
+      const upd = { status: 'concluido', valorPago: N.r2(valor + ent), forma };
+      if (rec) upd.recompensa = { ...rec, aplicada: !!f.rec.checked };
+      await store.set('agendamentos', a.id, upd);
+      closeSheet(); toast('Atendimento finalizado · ' + brl(valor + ent) + (recOn() ? ` · +${R.cfgDe(C()).porAtendimento}⭐ para ${pn(a.nome)}` : ''));
     };
   });
 }
@@ -718,6 +732,12 @@ function renderAjustes(){
     ${N.entradaCfg(c).ativo && !String(N.entradaCfg(c).chavePix || '').trim() ? '<div class="note">Coloque sua chave Pix para o link começar a cobrar a entrada.</div>' : ''}
     <button class="btn s" data-act="testePix" style="align-self:flex-start">Testar Pix de R$ 1,00</button>
     <div><label class="f">Pré-requisitos que aparecem no link (um por linha)</label><textarea id="aj-regras" rows="9">${esc(N.regras(c).join('\n'))}</textarea></div></div>
+  <div class="card stack"><h3>🎁 Recompensas das clientes</h3>
+    <label class="tg"><input type="checkbox" id="aj-rec" ${R.cfgDe(c).ativo ? 'checked' : ''}>Programa de estrelinhas ativo</label>
+    <div class="grid2"><div><label class="f">Estrelas por atendimento</label><input id="aj-rpa" type="number" min="1" value="${R.cfgDe(c).porAtendimento}"></div><div><label class="f">Bônus no Natal (+⭐)</label><input id="aj-rbn" type="number" min="0" value="${R.cfgDe(c).bonusNatal}"></div></div>
+    <div><label class="f">Prêmios (um por linha: estrelas | prêmio)</label><textarea id="aj-cat" rows="6">${esc(R.cfgDe(c).catalogo.map(x => `${x.custo} | ${x.nome}`).join('\n'))}</textarea></div>
+    <p class="muted small">A cliente acumula estrelas a cada atendimento concluído, ganha emblemas e escolhe o prêmio ao agendar. Você confirma o uso no "Finalizar e receber". Prêmio com "R$ de desconto" já abate do valor.</p>
+    ${S.perfisErr ? '<div class="note">Para o perfil aparecer para as clientes, publique as regras novas do arquivo firestore.rules no Firebase (Firestore › Regras).</div>' : ''}</div>
   <div class="card stack"><h3>Folgas e dias bloqueados</h3>
     <div class="row" style="flex-wrap:nowrap"><input type="date" id="novoBloq"><button class="btn s" data-act="addBloq">Bloquear</button></div>
     <div class="chips">${(c.bloqueios || []).slice().sort().map(b => `<span class="chip">${fmtCurto(b)}<button data-act="delBloq" data-b="${b}" aria-label="Desbloquear">×</button></span>`).join('') || '<span class="muted small">Nenhum dia bloqueado.</span>'}</div></div>
@@ -739,6 +759,8 @@ function lerAjustes(){
   c.diasAFrente = Math.min(120, Math.max(1, Number($('#aj-dias').value) || 30));
   c.natal = { ativo: $('#aj-natal').checked, adicional: Math.max(0, num($('#aj-adic').value)), titulo: $('#aj-titulo').value.trim() || 'Agenda de Natal' };
   c.entrada = { ativo: $('#aj-ent').checked, percentual: Math.min(100, Math.max(1, Number($('#aj-pct').value) || 50)), tipoChave: $('#aj-tipo').value, chavePix: $('#aj-chave').value.trim(), recebedor: $('#aj-receb').value.trim() || 'Julia Marcico', cidade: $('#aj-cid').value.trim() || 'Rio de Janeiro' };
+  c.recompensas = { ativo: $('#aj-rec').checked, porAtendimento: Math.max(1, Number($('#aj-rpa').value) || 10), bonusNatal: Math.max(0, Number($('#aj-rbn').value) || 0),
+    catalogo: $('#aj-cat').value.split('\n').map(l => { const [a, ...b] = l.split('|'); return { custo: Math.round(num(a)), nome: b.join('|').trim() }; }).filter(x => x.custo > 0 && x.nome) };
   c.regras = $('#aj-regras').value.split('\n').map(x => x.trim()).filter(Boolean);
 }
 
@@ -828,17 +850,36 @@ document.addEventListener('click', e => {
   e.preventDefault(); fn(t.dataset, t);
 });
 
+/* ================= PERFIS DE RECOMPENSA ================= */
+let syncT = null;
+function agendarSync(){ clearTimeout(syncT); syncT = setTimeout(syncPerfis, 1200); }
+async function syncPerfis(){
+  if (!S.perfis || S.perfisErr || !S.cfg) return;
+  const grupos = {};
+  S.ags.forEach(a => { const k = R.chave(a.telefone); if (k) (grupos[k] = grupos[k] || []).push(a); });
+  const atual = Object.fromEntries(S.perfis.map(p => [p.id, p]));
+  for (const [k, ags] of Object.entries(grupos)){
+    const p = R.calcular(ags, S.cfg); const o = atual[k] || {};
+    const igual = ['nome', 'concluidos', 'ganhas', 'usadas', 'estrelas', 'ultimaVisita'].every(x => o[x] === p[x]) && JSON.stringify(o.emblemas || []) === JSON.stringify(p.emblemas);
+    if (igual) continue;
+    const novos = p.emblemas.filter(e => !(o.emblemas || []).includes(e));
+    try { await store.set('perfis', k, { ...p, novos: novos.length ? novos : (o.novos || []), atualizadoEm: Date.now() }); }
+    catch (e) { console.error(e); S.perfisErr = true; return; }
+  }
+}
+
 /* ================= INÍCIO ================= */
 function start(){
+  store.watch('perfis', x => { S.perfis = x; agendarSync(); }, () => { S.perfisErr = true; });
   store.watchDoc('config', 'geral', c => {
     if (!c){ store.set('config', 'geral', DEFAULT_CONFIG); return; }
-    S.cfg = c; $('#nomeNegocio').textContent = c.nome || 'Minha agenda';
+    S.cfg = c; agendarSync(); $('#nomeNegocio').textContent = c.nome || 'Minha agenda';
     const on = !!N.natal(c).ativo; document.documentElement.toggleAttribute('data-natal', on);
     try { localStorage.setItem('natalOff', on ? '0' : '1'); } catch (e) {}
     document.querySelector('meta[name=theme-color]').content = on ? '#8e1620' : '#c4507a';
     render();
   });
-  store.watch('agendamentos', x => { S.ags = x; render(); });
+  store.watch('agendamentos', x => { S.ags = x; render(); agendarSync(); });
   store.watch('encaixes', x => { S.enc = x; render(); });
   store.watch('vendas', x => { S.vendas = x; render(); });
   store.watch('despesas', x => { S.desp = x; render(); });
@@ -865,6 +906,7 @@ function seedDemo(){
   ag('d2', 'Bianca Lima', '21977776666', sv[3], d(0), '14:00', 'pendente', { preco: 70, deco: 'Vermelho com floco de neve dourado', entrada: { valor: 35, percentual: 50, forma: 'pix', status: 'informada', informadaEm: Date.now() } });
   ag('d3', 'Renata Alves', '21966665555', sv[4], d(1), '10:00', 'confirmado', { origem: 'manual' });
   ag('d4', 'Paula Rocha', '21955554444', sv[0], d(-1), '16:00', 'concluido', { valorPago: 35, forma: 'pix' });
+  [[-40, 0], [-30, 3], [-20, 2], [-12, 3]].forEach(([n, i], k) => ag('h' + k, 'Carla Souza', '21988887777', sv[i], d(n), '10:00', 'concluido', { valorPago: sv[i].preco, forma: 'pix' }));
   store.add('encaixes', { nome: 'Fernanda Dias', telefone: '21944443333', servicoId: 's2', servicoNome: 'Pé', dias: ['sex', 'sáb'], periodo: 'tarde', obs: '', status: 'aguardando', origem: 'link', criadoEm: Date.now() - 2 * 864e5 });
   store.add('encaixes', { nome: 'Marina Costa', telefone: '21933332222', servicoId: 's4', servicoNome: 'Esmaltação em gel', dias: [], periodo: 'manhã', obs: 'Qualquer vaga serve', status: 'aguardando', origem: 'manual', criadoEm: Date.now() - 5 * 864e5 });
   const formas = ['pix', 'pix', 'dinheiro', 'credito', 'debito'];

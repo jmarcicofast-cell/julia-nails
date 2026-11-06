@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Great+Vibes&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
 <script src="natal.js"></script>
+<script src="recompensas.js"></script>
 <script src="qrcode.js"></script>
 <script>try{if(localStorage.getItem("natalOff")==="1")document.documentElement.removeAttribute("data-natal")}catch(e){}</script>
 <style>
@@ -31,7 +32,7 @@ p{margin:0}
 .hero .k{font-size:11.5px;color:var(--rose);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:6px}
 .hero p{color:var(--muted);margin-top:8px}
 .tabs{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 16px}
-.tabs-in{max-width:528px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tabs-in{max-width:528px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
 .tab{background:none;border:0;border-radius:10px;padding:9px 4px;font:700 13px Manrope,sans-serif;color:var(--muted);cursor:pointer;position:relative}
 .tab.on{background:var(--rose);color:var(--rose-ink)}
 .tab .dot{position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--red)}
@@ -107,7 +108,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 .xmas{display:none}
 [data-natal] .xmas{display:block}
 [data-natal] .hero-std{display:none}
-.xhero{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#b3222c 0%,#8e1620 55%,#6d0f17 100%);color:#fff6e6;text-align:center;padding:calc(30px + env(safe-area-inset-top)) 20px 34px;border-bottom:3px solid #c9a24a}
+.xhero{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#b3222c 0%,#8e1620 55%,#6d0f17 100%);color:#fff6e6;text-align:center;padding:calc(64px + env(safe-area-inset-top)) 20px 34px;border-bottom:3px solid #c9a24a}
 .xhero .t{font-family:Cinzel,Georgia,serif;font-weight:700;font-size:clamp(30px,9vw,46px);line-height:1;letter-spacing:.02em;background:linear-gradient(180deg,#f8e3a6 0%,#e0b65a 45%,#b98a2e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(0,0,0,.08)}
 .xhero .n{font-family:"Great Vibes",cursive;font-size:34px;line-height:1.1;color:#f3d58c;margin-top:8px}
 .xhero p{color:#f6dcc8;font-size:14px;margin:8px auto 0;max-width:420px}
@@ -149,18 +150,71 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 .passos li+li{margin-top:6px}
 .passos li:before{content:counter(p);width:22px;height:22px;flex:none;border-radius:50%;background:var(--pine);color:#f3d58c;display:grid;place-items:center;font-weight:700;font-size:12px}
 [data-natal] .foot{font-family:"Great Vibes",cursive;font-size:26px;color:var(--gold)}
+
+/* ===== PERFIL E RECOMPENSAS ===== */
+.pf-top{text-align:center;padding:22px 16px;background:radial-gradient(120% 100% at 50% 0%,#b3222c,#7d121b);color:#fff6e6;border:0;position:relative;overflow:hidden}
+:root:not([data-natal]) .pf-top{background:linear-gradient(160deg,var(--rose),#8f3358)}
+.pf-top .av{width:72px;height:72px;margin:0 auto;border-radius:50%;background:#fff6e6;color:#8e1620;display:grid;place-items:center;font:700 30px Fraunces,serif;box-shadow:0 0 0 4px #e0b65a}
+.pf-top .gorro{position:absolute;left:50%;top:6px;transform:translateX(-4px) rotate(-14deg);font-size:34px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.pf-top h2{color:#fff6e6;margin-top:10px;font-size:24px}
+.pf-top .nv{display:inline-flex;gap:6px;margin-top:6px;background:rgba(255,246,230,.16);border:1px solid rgba(224,182,90,.6);border-radius:99px;padding:4px 12px;font-weight:700;font-size:13px;color:#f3d58c}
+.pf-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.pf-stats div{background:rgba(255,246,230,.1);border-radius:12px;padding:8px 4px}
+.pf-stats b{display:block;font:600 22px Fraunces,serif;color:#f8e3a6}
+.pf-stats span{font-size:11.5px;color:#f6dcc8}
+.prog{height:12px;border-radius:8px;background:var(--line);overflow:hidden;position:relative}
+.prog i{display:block;height:100%;border-radius:8px;background:repeating-linear-gradient(135deg,#9e1b24 0 8px,#fff6ec 8px 13px);transition:width .6s}
+:root:not([data-natal]) .prog i{background:var(--rose)}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bdg{text-align:center;font-size:12px;font-weight:700;line-height:1.25;background:none;border:0;padding:0;color:var(--ink);font-family:Manrope,sans-serif;cursor:pointer}
+.bdg .md{width:62px;height:62px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:radial-gradient(circle at 35% 30%,#fff3cf,#e2bd6b 60%,#a77b26);box-shadow:0 0 0 3px var(--card),0 0 0 5px #c9a24a,0 4px 10px rgba(120,80,10,.25)}
+.bdg.off{color:var(--muted)}
+.bdg.off .md{background:var(--line);box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--line);filter:grayscale(1);opacity:.55}
+.bdg.novo .md{animation:pop 1.2s ease 2}
+@keyframes pop{30%{transform:scale(1.18) rotate(-6deg)}60%{transform:scale(.95)}}
+.prem{display:flex;align-items:center;gap:12px;padding:11px 0}
+.prem+.prem{border-top:1px dashed var(--line)}
+.prem .cu{flex:none;min-width:54px;text-align:center;font:700 13px Manrope,sans-serif;padding:6px 8px;border-radius:10px;background:var(--gold-soft);color:var(--gold)}
+.prem.ok .cu{background:var(--green-soft);color:var(--green)}
+.prem .tx{flex:1;font-weight:600;font-size:14px}
+.prem .tx small{display:block;color:var(--muted);font-weight:600;font-size:12px}
+.recsel{background:var(--gold-soft);border-radius:12px;padding:12px}
+.confete{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confete i{position:absolute;top:-20px;font-style:normal;font-size:22px;animation:cai 2.6s ease-in forwards}
+@keyframes cai{to{transform:translateY(110vh) rotate(540deg);opacity:.2}}
+/* ===== MAIS ENFEITES ===== */
+.luzes{position:relative;height:30px;margin-top:-16px;z-index:2;pointer-events:none}
+.luzes svg{width:100%;height:30px;display:block}
+.luzes .b{animation:pisca 1.6s infinite}
+.luzes .b:nth-child(3n){animation-delay:.5s}.luzes .b:nth-child(3n+1){animation-delay:1s}
+@keyframes pisca{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.luzes .b,.bdg.novo .md{animation:none}}
+.bolas{position:absolute;top:0;display:flex;gap:10px;pointer-events:none}
+.bolas.e{left:12px}.bolas.d{right:12px}
+.bolas span{display:flex;flex-direction:column;align-items:center}
+.bolas span:before{content:"";width:1px;background:#e0b65a;opacity:.8}
+.bolas span:nth-child(1):before{height:14px}.bolas span:nth-child(2):before{height:28px}
+.bolas span i{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 8%,var(--c) 40%,#000 160%);position:relative;animation:balanca 4s ease-in-out infinite;transform-origin:50% -30px}
+.bolas span i:before{content:"";position:absolute;left:6px;top:-4px;width:6px;height:4px;border-radius:1px;background:#e0b65a}
+@keyframes balanca{50%{transform:rotate(7deg)}}
+.rodape-natal{text-align:center;font-size:26px;letter-spacing:6px;margin-top:22px;opacity:.9}
+.bengala{height:6px;border-radius:4px;margin:14px auto 0;max-width:180px;background:repeating-linear-gradient(135deg,#9e1b24 0 7px,#fff6ec 7px 12px)}
+[data-natal] .card.stack>.step h3:after{content:" ✦";color:var(--gold);font-size:12px}
 </style>
 </head>
 <body>
 
 <header class="xhero xmas">
   <div class="snow" id="snow"></div>
-  <span class="flk" style="left:16px;top:calc(18px + env(safe-area-inset-top))">✻</span><span class="flk" style="right:16px;top:calc(18px + env(safe-area-inset-top))">✻</span>
+  <div class="bolas e"><span><i style="--c:#d4a23a"></i></span><span><i style="--c:#c3202b"></i></span></div>
+  <div class="bolas d"><span><i style="--c:#2c7a50"></i></span><span><i style="--c:#d4a23a"></i></span></div>
+  <span class="flk" style="left:50%;transform:translateX(-50%);top:calc(16px + env(safe-area-inset-top));font-size:26px">✻</span>
   <div class="t" id="xTitulo">Agenda de Natal</div>
   <div class="n" id="xNome">Júlia Marcico Nails</div>
   <div class="sep">♥</div>
   <p id="xBoas">Escolha o serviço e o melhor horário pra você 💅</p>
 </header>
+<div class="luzes xmas" aria-hidden="true" id="luzes"></div>
 <div class="hero hero-std">
   <div class="k">Agendamento online</div>
   <h1 id="nome">Júlia Marcico Nails</h1>
@@ -169,8 +223,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 
 <div class="tabs"><div class="tabs-in">
   <button class="tab on" data-v="agendar">Agendar</button>
-  <button class="tab" data-v="meus">Meus horários</button>
-  <button class="tab" data-v="chat">Conversar<i class="dot" id="chatDot" hidden></i></button>
+  <button class="tab" data-v="meus">Horários</button>
+  <button class="tab" data-v="perfil" id="tabPerfil">Perfil<i class="dot" id="perfilDot" hidden></i></button>
+  <button class="tab" data-v="chat">Chat<i class="dot" id="chatDot" hidden></i></button>
 </div></div>
 
 <main class="wrap">
@@ -187,6 +242,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
       <div><label class="f">Seu WhatsApp com DDD</label><input name="telefone" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
       <div id="decoBox"><label class="f">Decoração escolhida</label><input name="deco" placeholder="Ex.: francesinha vermelha com floco de neve dourado"><p class="muted small" style="margin-top:4px">Escolha antes do atendimento — pode mandar foto de referência no WhatsApp.</p></div>
       <div><label class="f">Observação (opcional)</label><input name="obs" placeholder="Ex.: alguma alergia, preferência…"></div>
+      <div id="recBox"></div>
       <div id="entradaBox"></div>
       <div id="regras"></div>
       <label class="aceite" id="aceiteBox"><input type="checkbox" name="aceite"><span>Li e aceito os pré-requisitos (tolerância de 10 min e entrada não devolvida em caso de falta).</span></label>
@@ -196,6 +252,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
   </section>
 
   <section class="view" id="v-meus"></section>
+  <section class="view" id="v-perfil"></section>
 
   <section class="view" id="v-chat">
     <form id="chatIdent" class="card stack">
@@ -212,6 +269,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
     <a id="btnWhats" class="btn g block" target="_blank" rel="noopener" hidden>Prefere WhatsApp? Chamar agora</a>
   </section>
 
+  <div class="xmas"><div class="rodape-natal">🎄🎁⛄🎁🎄</div><div class="bengala"></div></div>
   <p class="foot" id="foot"></p>
 </main>
 
@@ -249,9 +307,9 @@ const store = {
     if (DEMO) return onBus(() => cb(Object.entries(demoCol(path)).map(([id, d]) => ({ id, ...d }))));
     return fb.f.onSnapshot(fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => console.error(path, e));
   },
-  watchDoc(path, id, cb){
+  watchDoc(path, id, cb, onErr){
     if (DEMO) return onBus(() => { const d = demoCol(path)[id]; cb(d ? { id, ...d } : null); });
-    return fb.f.onSnapshot(fb.f.doc(fb.db, path, id), d => cb(d.exists() ? { id: d.id, ...d.data() } : null), e => console.error(path, e));
+    return fb.f.onSnapshot(fb.f.doc(fb.db, path, id), d => cb(d.exists() ? { id: d.id, ...d.data() } : null), e => { console.error(path, e); onErr && onErr(e); });
   }
 };
 
@@ -302,7 +360,7 @@ function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
 /* ================= ESTADO ================= */
 const S = { cfg: null, ocup: [], serv: null, dia: null, hora: null, meus: {}, msgs: [], conv: null };
 const me = () => lsGet('cliente') || {};
-const salvarMe = (nome, telefone) => lsSet('cliente', { nome, telefone });
+const salvarMe = (nome, telefone) => { lsSet('cliente', { nome, telefone }); ligarPerfil(); };
 const meusIds = () => lsGet('meusAgs') || [];
 const servAtual = () => (S.cfg?.servicos || []).find(s => s.id === S.serv);
 const LABEL = { pendente: 'Aguardando confirmação', confirmado: 'Confirmado ✓', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Não foi possível', falta: 'Falta registrada' };
@@ -311,6 +369,8 @@ const precoDe = s => N.precoFinal(S.cfg, s);
 const natalOn = () => N.natal(S.cfg).ativo;
 const entradaOn = () => N.entradaAtiva(S.cfg);
 const pct = () => Number(N.entradaCfg(S.cfg).percentual) || 0;
+const R = window.RECOMP;
+const recOn = () => !!S.cfg && R.cfgDe(S.cfg).ativo;
 
 let toastT;
 function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2800); }
@@ -324,6 +384,7 @@ function go(v){
   S.tab = v;
   if (v === 'chat') abrirChatSeTiver();
   if (v === 'meus') renderMeus();
+  if (v === 'perfil') renderPerfil();
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
 
@@ -363,6 +424,7 @@ function renderPassos(){
     const pr = precoDe(s); const en = N.valorEntrada(c, pr);
     $('#resumo').innerHTML = `<b>${esc(s.nome)}</b> · ${brl(pr)}<br><span class="muted">${dataLonga(S.dia)}</span> às <b>${S.hora}</b>`;
     $('#entradaBox').innerHTML = en ? `<div class="ent"><span>Entrada para reservar (${pct()}%)</span><b>${brl(en)}</b><span class="tot">Restante no dia do atendimento</span><span class="tot" style="text-align:right">${brl(pr - en)}</span></div>` : '';
+    renderRecBox();
     $('#decoBox').hidden = !natalOn(); $('#aceiteBox').hidden = !N.regras(c).length;
     $('#btnEnviar').textContent = en ? 'Continuar para pagar a entrada' : 'Solicitar horário';
     $('#dadosNota').textContent = en ? 'No próximo passo você paga a entrada por Pix aqui mesmo, e o horário fica reservado.' : 'O horário fica reservado e a confirmação chega pelo WhatsApp.';
@@ -379,8 +441,10 @@ $('#dados').addEventListener('submit', async e => {
   if (!$('#aceiteBox').hidden && !f.aceite.checked){ toast('Marque que leu e aceita os pré-requisitos'); return; }
   const s = servAtual(); const c = S.cfg;
   if (!livre()){ toast('Esse horário acabou de ser ocupado. Escolha outro.'); S.hora = null; renderPassos(); return; }
+  const recV = f.querySelector('[name=rec]')?.value || ''; const recP = recV ? R.cfgDe(c).catalogo.find(x => `${x.custo}|${x.nome}` === recV) : null;
   const id = uid(); const preco = precoDe(s); const fim = toHM(toMin(S.hora) + Number(s.duracao));
   const ag = { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao), preco, precoBase: Number(s.preco) || 0, adicionalNatal: natalOn() ? Number(N.natal(c).adicional) || 0 : 0, data: S.dia, ini: S.hora, fim, deco, obs: f.obs.value.trim(), aceitouRegras: !!f.aceite.checked, status: 'pendente', origem: 'link', criadoEm: Date.now() };
+  if (recP) ag.recompensa = { nome: recP.nome, custo: recP.custo };
   salvarMe(nome, tel);
   const en = N.valorEntrada(c, preco);
   if (en) telaPix(id, ag, en); else enviarPedido(id, ag, $('#btnEnviar'));
@@ -418,12 +482,13 @@ async function enviarPedido(id, ag, btn){
   lsSet('meusAgs', [id, ...meusIds()].slice(0, 20)); watchMeus();
   btn.disabled = false; btn.textContent = txt;
   const f = $('#dados'); f.obs.value = ''; f.deco.value = ''; f.aceite.checked = false;
-  S.serv = null; S.dia = null; S.hora = null; renderPassos();
+  S.serv = null; S.dia = null; S.hora = null; S.recSel = ''; renderPassos();
   const w = S.cfg.whatsapp; const en = ag.entrada;
   const msg = `Oi! Acabei de pedir um horário pelo link 💅\n${ag.servicoNome} · ${dataLonga(ag.data)} às ${ag.ini}\nNome: ${ag.nome}` + (ag.deco ? `\nDecoração: ${ag.deco}` : '') + (en ? `\n\nJá fiz o Pix da entrada de ${brl(en.valor)}. Segue o comprovante:` : '');
   sheet(`<div class="stack center"><div class="ok">${natalOn() ? '🎄' : '💅'}</div><h2>Pedido enviado!</h2>
     <p class="muted">${esc(ag.servicoNome)}<br><span>${dataLonga(ag.data)}</span> às ${ag.ini}</p>
     <p class="small">${en ? `Recebemos seu aviso de pagamento da entrada (${brl(en.valor)}). Assim que for conferido, seu horário é confirmado e você vê em <b>Meus horários</b>.` : 'Seu horário está reservado. Assim que for confirmado, você recebe uma mensagem e vê em <b>Meus horários</b>.'}</p>
+    ${recOn() ? `<p class="small" style="color:var(--gold);font-weight:700">⭐ Você ganha +${R.cfgDe(S.cfg).porAtendimento + (natalOn() ? R.cfgDe(S.cfg).bonusNatal : 0)} estrelinhas quando concluir este atendimento!${ag.recompensa ? `<br>🎁 Prêmio pedido: ${esc(ag.recompensa.nome)}` : ''}</p>` : ''}
     ${w ? `<a class="btn g block" target="_blank" rel="noopener" href="${waLink(w, msg)}">${en ? 'Enviar comprovante no WhatsApp' : 'Avisar no WhatsApp'}</a>` : ''}
     <button class="btn p block" data-act="fechar">Ok</button></div>`);
 }
@@ -468,6 +533,73 @@ function renderMeus(){
   el.innerHTML = lista.length ? `<div class="card">${lista.map(a => `<div class="meu"><div><b>${esc(a.servicoNome)}</b><div class="muted small">${dataLonga(a.data)} às ${a.ini}</div>${a.entrada ? `<div class="small" style="margin-top:2px;color:${a.entrada.status === 'recebida' ? 'var(--green)' : 'var(--gold)'}">Entrada ${brl(a.entrada.valor)} · ${a.entrada.status === 'recebida' ? 'recebida ✓' : a.entrada.status === 'devolvida' ? 'devolvida' : 'em conferência'}</div>` : ''}</div><span class="chip ${a.status}">${LABEL[a.status] || a.status}</span></div>`).join('')}</div>
     ${w ? `<a class="btn block" target="_blank" rel="noopener" href="${waLink(w, 'Oi! Preciso falar sobre meu horário.')}">Precisa remarcar ou cancelar? Fale no WhatsApp</a>` : ''}`
     : `<div class="card center stack"><p class="muted">Você ainda não pediu horários por este aparelho.</p><button class="btn p" data-act="irAgendar">Agendar agora</button></div>`;
+}
+
+/* ================= PERFIL E RECOMPENSAS ================= */
+let unsubPerfil = null;
+function ligarPerfil(){
+  const k = R.chave(me().telefone);
+  if (!k || k === S.perfilKey) return;
+  S.perfilKey = k; S.perfil = undefined; unsubPerfil && unsubPerfil();
+  unsubPerfil = store.watchDoc('perfis', k, p => { S.perfil = p; avisarEmblemas(); if (S.tab === 'perfil') renderPerfil(); if (S.tab === 'agendar') renderRecBox(); }, () => { S.perfil = null; if (S.tab === 'perfil') renderPerfil(); });
+}
+const perfilAtual = () => S.perfil || { nome: pn(me().nome), concluidos: 0, ganhas: 0, usadas: 0, estrelas: 0, emblemas: [] };
+const pn = n => String(n || '').trim().split(/\s+/)[0];
+function avisarEmblemas(){
+  const p = S.perfil; if (!p) return;
+  const vistos = lsGet('emblemasVistos:' + S.perfilKey) || [];
+  const novos = (p.emblemas || []).filter(e => !vistos.includes(e));
+  $('#perfilDot').hidden = !novos.length || S.tab === 'perfil';
+}
+function confete(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = document.createElement('div'); box.className = 'confete';
+  box.innerHTML = Array.from({ length: 26 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 8) * .12}s">${['⭐', '❄️', '🎁', '💅', '✨', '🎄'][i % 6]}</i>`).join('');
+  document.body.appendChild(box); setTimeout(() => box.remove(), 3400);
+}
+function renderPerfil(){
+  const el = $('#v-perfil'); const m = me();
+  if (!recOn()){ el.innerHTML = '<div class="card center muted">O programa de recompensas está pausado no momento 💕</div>'; return; }
+  if (!R.chave(m.telefone)){
+    el.innerHTML = `<form class="card stack" id="perfilIdent"><h3>⭐ Seu perfil de recompensas</h3><p class="muted small">A cada atendimento concluído você ganha estrelinhas, coleciona emblemas e troca por mimos.</p>
+      <div><label class="f">Seu nome</label><input name="nome" autocomplete="name" required></div>
+      <div><label class="f">Seu WhatsApp com DDD (o mesmo dos agendamentos)</label><input name="telefone" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
+      <button class="btn p block">Ver meu perfil</button></form>`;
+    $('#perfilIdent').onsubmit = e => { e.preventDefault(); const f = e.target; if (R.chave(f.telefone.value) === ''){ toast('Confira seu WhatsApp com DDD'); return; } salvarMe(f.nome.value.trim(), f.telefone.value.trim()); renderPerfil(); };
+    return;
+  }
+  const p = perfilAtual(); const rc = R.cfgDe(S.cfg);
+  const nv = R.nivel(p.concluidos); const px = R.proximoNivel(p.concluidos);
+  const prox = rc.catalogo.find(x => x.custo > p.estrelas);
+  const base = prox ? (rc.catalogo.filter(x => x.custo <= p.estrelas).pop()?.custo || 0) : 0;
+  const pctProx = prox ? Math.min(100, Math.round((p.estrelas - base) / (prox.custo - base) * 100)) : 100;
+  const vistosK = 'emblemasVistos:' + S.perfilKey; const vistos = lsGet(vistosK) || [];
+  const novos = (p.emblemas || []).filter(e => !vistos.includes(e));
+  el.innerHTML = `
+    <div class="card pf-top"><span class="gorro xmas">🎅</span><div class="av">${esc((p.nome || m.nome || '?').charAt(0).toUpperCase())}</div>
+      <h2>${esc(p.nome && p.nome !== 'Cliente' ? p.nome : pn(m.nome) || 'Você')}</h2><div class="nv">${nv.ic} Nível ${nv.nome}</div>
+      <div class="pf-stats"><div><b>${p.estrelas}</b><span>estrelinhas ⭐</span></div><div><b>${p.concluidos}</b><span>atendimentos</span></div><div><b>${(p.emblemas || []).length}/${R.EMBLEMAS.length}</b><span>emblemas</span></div></div>
+      ${px ? `<p class="small" style="margin-top:12px;color:#f6dcc8">Faltam ${px.min - p.concluidos} atendimento(s) para o nível ${px.ic} ${px.nome}</p>` : '<p class="small" style="margin-top:12px;color:#f3d58c">Você chegou ao nível máximo 💎</p>'}</div>
+    <div class="card stack"><div class="row between"><h3>Próximo mimo</h3><span class="chip" style="background:var(--gold-soft);color:var(--gold)">${p.estrelas}⭐</span></div>
+      ${prox ? `<p class="small"><b>${esc(prox.nome)}</b> · faltam ${prox.custo - p.estrelas}⭐</p><div class="prog"><i style="width:${pctProx}%"></i></div>` : '<p class="small">Você já pode trocar qualquer mimo da lista! 🎉</p>'}
+      ${S.perfil === undefined ? '<p class="muted small">Carregando suas estrelinhas…</p>' : !S.perfil ? '<p class="muted small">Suas estrelinhas aparecem aqui depois do seu primeiro agendamento confirmado.</p>' : ''}</div>
+    <div class="card stack"><h3>Emblemas</h3><div class="badges">${R.EMBLEMAS.map(e => { const on = (p.emblemas || []).includes(e.id); return `<button class="bdg ${on ? '' : 'off'} ${novos.includes(e.id) ? 'novo' : ''}" data-act="emblema" data-id="${e.id}"><div class="md">${on ? e.ic : '🔒'}</div>${esc(e.nome)}</button>`; }).join('')}</div></div>
+    <div class="card"><h3>Troque suas estrelinhas</h3><p class="muted small" style="margin-top:4px">Escolha o mimo na hora de agendar. Ele é aplicado no dia do atendimento.</p>
+      ${rc.catalogo.map(x => { const ok = p.estrelas >= x.custo; return `<div class="prem ${ok ? 'ok' : ''}"><span class="cu">${x.custo}⭐</span><span class="tx">${esc(x.nome)}<small>${ok ? 'Disponível pra você!' : `Faltam ${x.custo - p.estrelas}⭐`}</small></span>${ok ? `<button class="btn s p" data-act="usarRec" data-v="${esc(x.custo + '|' + x.nome)}">Usar</button>` : ''}</div>`; }).join('')}</div>
+    <div class="card"><h3>Como ganhar estrelinhas</h3><ul class="small" style="margin:8px 0 0;padding-left:18px;line-height:1.7">
+      <li><b>+${rc.porAtendimento}⭐</b> a cada atendimento concluído</li>
+      ${rc.bonusNatal && natalOn() ? `<li><b>+${rc.bonusNatal}⭐ de bônus</b> nos atendimentos da Agenda de Natal 🎄</li>` : ''}
+      <li>Emblemas desbloqueiam conforme você agenda, paga a entrada em dia e não falta</li></ul></div>
+    <p class="muted small center">Perfil ligado ao WhatsApp ${esc(m.telefone)} · <a href="#" data-act="trocarPerfil" style="color:var(--rose)">trocar</a></p>`;
+  if (novos.length && S.perfil){ confete(); toast(`Novo emblema: ${R.EMBLEMAS.find(e => e.id === novos[0]).nome} 🎉`); lsSet(vistosK, [...vistos, ...novos]); $('#perfilDot').hidden = true; }
+}
+function renderRecBox(){
+  const box = $('#recBox'); if (!box) return;
+  const p = S.perfil; const rc = recOn() ? R.cfgDe(S.cfg) : null;
+  const disp = rc && p ? rc.catalogo.filter(x => x.custo <= p.estrelas) : [];
+  if (!disp.length){ box.innerHTML = ''; return; }
+  const atual = box.querySelector('select')?.value ?? S.recSel ?? '';
+  box.innerHTML = `<div class="recsel"><label class="f" style="color:var(--gold)">🎁 Você tem ${p.estrelas}⭐ — quer usar um mimo?</label><select name="rec"><option value="">Agora não, guardar minhas estrelas</option>${disp.map(x => { const v = `${x.custo}|${x.nome}`; return `<option value="${esc(v)}" ${v === atual ? 'selected' : ''}>${esc(x.nome)} (${x.custo}⭐)</option>`; }).join('')}</select></div>`;
 }
 
 /* ================= CHAT ================= */
@@ -515,12 +647,16 @@ const ACTS = {
   hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
   encaixe: () => formEncaixe(),
   irAgendar: () => go('agendar'),
+  emblema: d => { const e = R.EMBLEMAS.find(x => x.id === d.id); const on = (perfilAtual().emblemas || []).includes(d.id); toast(`${e.ic} ${e.nome} — ${on ? 'conquistado!' : e.como}`); },
+  usarRec: d => { S.recSel = d.v; go('agendar'); toast('Escolha o serviço e o horário — o mimo já fica selecionado 🎁'); },
+  trocarPerfil: () => { lsSet('cliente', {}); S.perfilKey = null; S.perfil = undefined; unsubPerfil && unsubPerfil(); unsubPerfil = null; renderPerfil(); },
   copiarPix: () => { const c = S.pixAtual || ''; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => toast('Código Pix copiado ✓ Cole no app do banco')).catch(() => { const r = document.createRange(); r.selectNodeContents($('#pixCode')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Toque e segure para copiar'); }); }
 };
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault(); fn(t.dataset, t); });
 
 /* ================= INÍCIO ================= */
 S.tab = 'agendar';
+$('#luzes').innerHTML = (() => { const n = 14, cores = ['#e23b3b', '#f2c14e', '#3fae6a', '#4aa3df']; let b = '', d = 'M0 4'; for (let i = 0; i < n; i++){ const x = 14 + i * (372 / (n - 1)); const y = i % 2 ? 13 : 6; d += ` L${x.toFixed(1)} ${y}`; b += `<g class="b"><rect x="${(x - 2).toFixed(1)}" y="${y}" width="4" height="4" rx="1" fill="#2a3b2f"/><ellipse cx="${x.toFixed(1)}" cy="${y + 10}" rx="4.2" ry="6.5" fill="${cores[i % 4]}"/></g>`; } return `<svg viewBox="0 0 400 30" preserveAspectRatio="xMidYMin slice"><path d="${d} L400 4" fill="none" stroke="#2a3b2f" stroke-width="1.4" stroke-linejoin="round"/>${b}</svg>`; })();
 $('#snow').innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 47) % 100}%;width:${3 + (i % 4)}px;height:${3 + (i % 4)}px;animation-duration:${7 + (i % 5) * 1.7}s;animation-delay:-${(i * 1.3) % 9}s"></i>`).join('');
 try { await initStore(); } catch (e) { console.error(e); $('#passos').innerHTML = '<div class="card center muted">Não consegui carregar a agenda agora. Tente de novo em instantes.</div>'; }
 if (DEMO || fb){
@@ -539,7 +675,7 @@ if (DEMO || fb){
     renderRegras(); renderPassos();
   });
   store.watch('ocupados', os => { S.ocup = os; renderPassos(); });
-  watchMeus(); vigiarConversa();
+  watchMeus(); vigiarConversa(); ligarPerfil();
 }
 </script>
 </body>
