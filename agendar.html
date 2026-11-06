@@ -413,7 +413,7 @@ function renderPassos(){
   if (S.hora && !slots.includes(S.hora)) S.hora = null;
   el.innerHTML = `
   <div class="card stack"><div class="step"><span>1</span><h3>Escolha o serviço</h3></div>
-    <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(precoDe(x))}${natalOn() && Number(N.natal(c).adicional) ? `<small>com +${brl(N.natal(c).adicional)} natalino</small>` : ''}</b></button>`).join('')}</div></div>
+    <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(precoDe(x))}</b></button>`).join('')}</div></div>
   <div class="card stack ${s ? '' : 'dim'}"><div class="step"><span>2</span><h3>Escolha o dia</h3></div>
     <div class="dstrip" id="dstrip">${dias.map(({ d, livres }) => { const x = parseYmd(d); return `<button class="dd ${d === S.dia ? 'on' : ''}" data-act="dia" data-d="${d}" ${livres ? '' : 'disabled'}>${DIAS[x.getDay()]}<b>${x.getDate()}</b>${x.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</button>`; }).join('')}</div></div>
   <div class="card stack ${s && S.dia ? '' : 'dim'}"><div class="step"><span>3</span><h3>Escolha o horário</h3></div>
