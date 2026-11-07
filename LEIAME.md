@@ -79,7 +79,7 @@ Ficará assim:
 
 ## Calendário e Mamãe Noel
 - O dia agora é escolhido num calendário do mês (com setas para o mês seguinte). O pontinho verde marca os dias com horário livre.
-- No modo Natal, aparecem ilustrações animadas da Júlia de Mamãe Noel (topo do link, pedido enviado e dia sem vaga). As cores de cabelo e pele ficam no começo do arquivo mamae-noel.js.
+- O link usa as caricaturas realistas da Júlia (pasta img/): retrato de Natal com gorro no topo, a do beijinho com beijos voando no "Pedido enviado" e o rostinho no login e nos avisos. Para trocar, substitua os arquivos da pasta img/ mantendo os nomes.
 
 ## Liberar e bloquear horários (painel)
 - Na **Agenda**, cada dia tem o quadro "🔒 Liberar e bloquear horários": toque num horário para bloquear (vermelho) e toque de novo para liberar. Salva na hora e o link atualiza sozinho.
