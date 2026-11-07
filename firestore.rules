@@ -25,9 +25,17 @@ service cloud.firestore {
     // Agendamentos: cliente só cria pedido "pendente" e só lê o próprio (pelo código dele)
     match /agendamentos/{id} {
       allow get: if true;
-      allow list: if isAdmin();
-      allow create: if isAdmin() || request.resource.data.status == 'pendente';
+      // a cliente logada vê a lista dos horários da própria conta
+      allow list: if isAdmin() || (request.auth != null && resource.data.clienteUid == request.auth.uid);
+      allow create: if isAdmin() || (request.resource.data.status == 'pendente'
+        && (!('clienteUid' in request.resource.data) || (request.auth != null && request.resource.data.clienteUid == request.auth.uid)));
       allow update, delete: if isAdmin();
+    }
+
+    // Conta da cliente (nome, WhatsApp, e-mail): só ela e a Júlia
+    match /clientes/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if isAdmin();
     }
 
     // Perfil de recompensas: a cliente lê só o dela (pelo WhatsApp); só a Júlia grava

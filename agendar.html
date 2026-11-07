@@ -60,6 +60,15 @@ p{margin:0}
 input,select,textarea{width:100%;font:16px Manrope,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none;min-height:46px}
 textarea{min-height:70px;resize:vertical}
 input:focus,select:focus,textarea:focus{border-color:var(--rose)}
+.acesso{margin-top:14px}
+body.sem-login .tabs,body.sem-login main.wrap{display:none}
+body:not(.sem-login) #acesso{display:none}
+.ac-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:4px}
+.ac-tabs button{border:0;background:transparent;border-radius:10px;padding:10px;font:700 14px Manrope,sans-serif;color:var(--muted);cursor:pointer}
+.ac-tabs button.on{background:var(--rose);color:var(--rose-ink)}
+.ac-err{color:var(--red,#c2483f);font-size:13px;font-weight:600;min-height:1em}
+.ac-top{display:flex;gap:12px;align-items:center}
+.conta{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
 .f{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
 .step{display:flex;align-items:center;gap:10px}
 .step>span{width:26px;height:26px;border-radius:50%;background:var(--rose-soft);color:var(--rose);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
@@ -222,7 +231,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
 [data-natal] .card.stack>.step h3:after{content:" ✦";color:var(--gold);font-size:12px}
 </style>
 </head>
-<body>
+<body class="sem-login">
 
 <header class="xhero xmas">
   <div class="snow" id="snow"></div>
@@ -242,6 +251,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--rose)}
   <p id="boas">Escolha o serviço e o melhor horário pra você 💅</p>
 </div>
 
+<section class="wrap acesso" id="acesso">
+  <div class="card stack">
+    <div class="ac-top"><div id="acMn"></div><div><h3 id="acTit">Entre para agendar</h3><p class="muted small" id="acSub">Use seu e-mail e senha. Primeira vez? Crie sua conta em 1 minutinho.</p></div></div>
+    <div class="ac-tabs"><button type="button" class="on" data-ac="entrar">Entrar</button><button type="button" data-ac="criar">Criar conta</button></div>
+    <form id="acForm" class="stack" autocomplete="on">
+      <div class="so-criar" hidden><label class="f">Seu nome</label><input name="nome" autocomplete="name"></div>
+      <div class="so-criar" hidden><label class="f">Seu WhatsApp com DDD</label><input name="telefone" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999"></div>
+      <div><label class="f">E-mail</label><input name="email" type="email" autocomplete="email" required></div>
+      <div><label class="f">Senha</label><input name="senha" type="password" autocomplete="current-password" minlength="6" required><p class="muted small so-criar" hidden style="margin-top:4px">Mínimo de 6 caracteres.</p></div>
+      <p class="ac-err" id="acErr"></p>
+      <button class="btn p block" id="acBtn">Entrar</button>
+      <button type="button" class="btn ghost block" id="acEsqueci">Esqueci minha senha</button>
+    </form>
+  </div>
+</section>
 <div class="tabs"><div class="tabs-in">
   <button class="tab on" data-v="agendar">Agendar</button>
   <button class="tab" data-v="meus">Horários</button>
@@ -314,9 +338,9 @@ let fb = null;
 async function initStore(){
   if (DEMO) return;
   const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
-  const [a, f] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js')]);
+  const [a, f, au] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), import(base + 'firebase-auth.js')]);
   const app = a.initializeApp(CFG.firebase);
-  fb = { f, db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }) };
+  fb = { f, au, auth: au.getAuth(app), db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }) };
 }
 const store = {
   async set(path, id, data){
@@ -324,6 +348,14 @@ const store = {
     await fb.f.setDoc(fb.f.doc(fb.db, path, id), data, { merge: true }); return id;
   },
   add(path, data){ return store.set(path, uid(), data); },
+  watchWhere(path, campo, valor, cb){
+    if (DEMO) return onBus(() => cb(Object.entries(demoCol(path)).map(([id, d]) => ({ id, ...d })).filter(d => d[campo] === valor)));
+    return fb.f.onSnapshot(fb.f.query(fb.f.collection(fb.db, path), fb.f.where(campo, '==', valor)), q => cb(q.docs.map(d => ({ id: d.id, ...d.data() }))), e => console.error(path, e));
+  },
+  async get(path, id){
+    if (DEMO) { const d = demoCol(path)[id]; return d ? { id, ...d } : null; }
+    const d = await fb.f.getDoc(fb.f.doc(fb.db, path, id)); return d.exists() ? { id: d.id, ...d.data() } : null;
+  },
   watch(path, cb){
     if (DEMO) return onBus(() => cb(Object.entries(demoCol(path)).map(([id, d]) => ({ id, ...d }))));
     return fb.f.onSnapshot(fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => console.error(path, e));
@@ -516,6 +548,7 @@ $('#dados').addEventListener('submit', async e => {
   const id = uid(); const preco = precoDe(s); const fim = toHM(toMin(S.hora) + Number(s.duracao));
   const ag = { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao), preco, precoBase: Number(s.preco) || 0, adicionalNatal: natalOn() ? Number(N.natal(c).adicional) || 0 : 0, data: S.dia, ini: S.hora, fim, deco, obs: f.obs.value.trim(), aceitouRegras: !!f.aceite.checked, status: 'pendente', origem: 'link', criadoEm: Date.now() };
   if (recP) ag.recompensa = { nome: recP.nome, custo: recP.custo };
+  if (S.user){ ag.clienteUid = S.user.uid; ag.email = S.user.email; }
   salvarMe(nome, tel);
   const en = N.valorEntrada(c, preco);
   if (en) telaPix(id, ag, en); else enviarPedido(id, ag, $('#btnEnviar'));
@@ -641,7 +674,9 @@ function confete(){
   box.innerHTML = Array.from({ length: 26 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 8) * .12}s">${['⭐', '❄️', '🎁', '💅', '✨', '🎄'][i % 6]}</i>`).join('');
   document.body.appendChild(box); setTimeout(() => box.remove(), 3400);
 }
-function renderPerfil(){
+function linhaConta(){ return S.user ? `<div class="card conta"><span>Conectada como <b>${esc(S.user.email)}</b></span><button class="btn s" data-act="sairConta">Sair</button></div>` : ''; }
+function renderPerfil(){ renderPerfilBase(); const el = $('#v-perfil'); if (S.user && !el.querySelector('.conta')) el.insertAdjacentHTML('afterbegin', linhaConta()); }
+function renderPerfilBase(){
   const el = $('#v-perfil'); const m = me();
   if (!recOn()){ el.innerHTML = '<div class="card center muted">O programa de recompensas está pausado no momento 💕</div>'; return; }
   if (!R.chave(m.telefone)){
@@ -729,15 +764,90 @@ const ACTS = {
   serv: d => { S.serv = d.id; S.hora = null; renderPassos(); },
   dia: d => { S.dia = d.d; S.hora = null; renderPassos(); },
   mes: d => { const ms = [...new Set(diasDisponiveis().map(x => x.slice(0, 7)))]; const i = ms.indexOf(S.mes) + Number(d.n); if (ms[i]) { S.mes = ms[i]; renderPassos(); } },
-  hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
+  hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= S.user?.nome || m.nome || ''; f.telefone.value ||= S.user?.telefone || m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
   encaixe: () => formEncaixe(),
   irAgendar: () => go('agendar'),
   emblema: d => { const e = R.EMBLEMAS.find(x => x.id === d.id); const on = (perfilAtual().emblemas || []).includes(d.id); toast(`${e.ic} ${e.nome} — ${on ? 'conquistado!' : e.como}`); },
   usarRec: d => { S.recSel = d.v; go('agendar'); toast('Escolha o serviço e o horário — o mimo já fica selecionado 🎁'); },
+  sairConta: async () => { if (!confirm('Sair da sua conta neste aparelho?')) return; await conta.sair(); },
   trocarPerfil: () => { lsSet('cliente', {}); S.perfilKey = null; S.perfil = undefined; unsubPerfil && unsubPerfil(); unsubPerfil = null; renderPerfil(); },
   copiarPix: () => { const c = S.pixAtual || ''; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => toast('Código Pix copiado ✓ Cole no app do banco')).catch(() => { const r = document.createRange(); r.selectNodeContents($('#pixCode')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Toque e segure para copiar'); }); }
 };
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault(); fn(t.dataset, t); });
+
+/* ================= CONTA DA CLIENTE (e-mail e senha) ================= */
+const ERROS = { 'auth/invalid-credential': 'E-mail ou senha incorretos.', 'auth/wrong-password': 'E-mail ou senha incorretos.', 'auth/user-not-found': 'Não achei conta com esse e-mail. Toque em "Criar conta".', 'auth/email-already-in-use': 'Esse e-mail já tem conta. Toque em "Entrar".', 'auth/invalid-email': 'Confira o e-mail.', 'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.', 'auth/too-many-requests': 'Muitas tentativas. Espere um pouco e tente de novo.', 'auth/network-request-failed': 'Sem internet. Tente de novo.' };
+const msgErro = e => ERROS[e?.code] || 'Não deu certo. Tente de novo.';
+const conta = {
+  // No modo demonstração as contas ficam só neste aparelho
+  async entrar(email, senha){
+    if (DEMO){ const cs = lsGet('demo:contas') || {}; const c = cs[email]; if (!c) throw { code: 'auth/user-not-found' }; if (c.senha !== senha) throw { code: 'auth/invalid-credential' }; lsSet('demo:sessao', email); return conta.ligar({ uid: c.uid, email }); }
+    await fb.au.signInWithEmailAndPassword(fb.auth, email, senha);
+  },
+  async criar(email, senha, nome, telefone){
+    if (DEMO){ const cs = lsGet('demo:contas') || {}; if (cs[email]) throw { code: 'auth/email-already-in-use' }; if (senha.length < 6) throw { code: 'auth/weak-password' }; const u = { uid: uid(), email }; cs[email] = { uid: u.uid, senha }; lsSet('demo:contas', cs); await store.set('clientes', u.uid, { nome, telefone, email, criadoEm: Date.now() }); lsSet('demo:sessao', email); return conta.ligar(u); }
+    const r = await fb.au.createUserWithEmailAndPassword(fb.auth, email, senha);
+    try { await fb.au.updateProfile(r.user, { displayName: nome }); } catch (e) {}
+    S.novoCadastro = { nome, telefone };
+    await store.set('clientes', r.user.uid, { nome, telefone, email, criadoEm: Date.now() });
+    await conta.ligar(r.user);
+  },
+  async esqueci(email){
+    if (DEMO) return;
+    await fb.au.sendPasswordResetEmail(fb.auth, email);
+  },
+  async sair(){
+    if (DEMO) lsSet('demo:sessao', null); else await fb.au.signOut(fb.auth);
+    S.user = null; lsSet('cliente', {}); document.body.classList.add('sem-login'); unsubContaAgs && unsubContaAgs();
+  },
+  async ligar(u){
+    let p = null; try { p = await store.get('clientes', u.uid); } catch (e) { console.error(e); }
+    p = p || S.novoCadastro || {};
+    S.user = { uid: u.uid, email: u.email, nome: p.nome || u.displayName || '', telefone: p.telefone || '' };
+    if (S.user.nome || S.user.telefone) lsSet('cliente', { nome: S.user.nome, telefone: S.user.telefone });
+    document.body.classList.remove('sem-login');
+    ligarPerfil(); vigiarAgsDaConta();
+    if (S.tab === 'perfil') renderPerfil();
+  }
+};
+let unsubContaAgs = null;
+function vigiarAgsDaConta(){
+  unsubContaAgs && unsubContaAgs();
+  if (!S.user) return;
+  unsubContaAgs = store.watchWhere('agendamentos', 'clienteUid', S.user.uid, lista => { lista.forEach(a => { S.meus[a.id] = a; }); if (S.tab === 'meus') renderMeus(); });
+}
+function telaAcesso(){
+  let modo = 'entrar'; const f = $('#acForm');
+  $('#acMn').innerHTML = MamaeNoel.mini();
+  const pinta = () => {
+    document.querySelectorAll('[data-ac]').forEach(b => b.classList.toggle('on', b.dataset.ac === modo));
+    f.querySelectorAll('.so-criar').forEach(x => x.hidden = modo !== 'criar');
+    f.nome.required = f.telefone.required = modo === 'criar';
+    f.senha.autocomplete = modo === 'criar' ? 'new-password' : 'current-password';
+    $('#acBtn').textContent = modo === 'criar' ? 'Criar minha conta' : 'Entrar';
+    $('#acEsqueci').hidden = modo === 'criar';
+    $('#acTit').textContent = modo === 'criar' ? 'Crie sua conta' : 'Entre para agendar';
+    $('#acErr').textContent = '';
+  };
+  document.querySelectorAll('[data-ac]').forEach(b => b.onclick = () => { modo = b.dataset.ac; pinta(); });
+  f.onsubmit = async e => {
+    e.preventDefault(); $('#acErr').textContent = ''; const btn = $('#acBtn'); btn.disabled = true;
+    const email = f.email.value.trim().toLowerCase(), senha = f.senha.value;
+    try {
+      if (modo === 'criar'){
+        if (R.chave(f.telefone.value) === ''){ throw { code: 'tel' }; }
+        await conta.criar(email, senha, f.nome.value.trim(), f.telefone.value.trim()); toast('Conta criada! 💅');
+      } else await conta.entrar(email, senha);
+      f.senha.value = '';
+    } catch (err) { console.error(err); $('#acErr').textContent = err.code === 'tel' ? 'Confira seu WhatsApp com DDD.' : msgErro(err); }
+    btn.disabled = false;
+  };
+  $('#acEsqueci').onclick = async () => {
+    const email = f.email.value.trim(); if (!email){ $('#acErr').textContent = 'Digite seu e-mail acima primeiro.'; return; }
+    try { await conta.esqueci(email); toast('Enviei um link para trocar a senha no seu e-mail 💌'); } catch (err) { $('#acErr').textContent = msgErro(err); }
+  };
+  pinta();
+}
 
 /* ================= INÍCIO ================= */
 S.tab = 'agendar';
@@ -762,6 +872,9 @@ if (DEMO || fb){
   });
   store.watch('ocupados', os => { S.ocup = os; renderPassos(); });
   watchMeus(); vigiarConversa(); ligarPerfil();
+  telaAcesso();
+  if (DEMO){ const e = lsGet('demo:sessao'); const c = e && (lsGet('demo:contas') || {})[e]; if (c) conta.ligar({ uid: c.uid, email: e }); }
+  else fb.au.onAuthStateChanged(fb.auth, u => { if (u){ if (!S.user || S.user.uid !== u.uid) conta.ligar(u); } else { S.user = null; document.body.classList.add('sem-login'); } });
 }
 </script>
 </body>
