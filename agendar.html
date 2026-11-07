@@ -705,7 +705,7 @@ function renderPerfilBase(){
     return;
   }
   const p = perfilAtual(); const rc = R.cfgDe(S.cfg);
-  const nv = R.nivel(p.concluidos); const px = R.proximoNivel(p.concluidos);
+  const nv = R.nivel(p.concluidos, S.cfg); const px = R.proximoNivel(p.concluidos, S.cfg);
   const prox = rc.catalogo.find(x => x.custo > p.estrelas);
   const base = prox ? (rc.catalogo.filter(x => x.custo <= p.estrelas).pop()?.custo || 0) : 0;
   const pctProx = prox ? Math.min(100, Math.round((p.estrelas - base) / (prox.custo - base) * 100)) : 100;
@@ -714,12 +714,12 @@ function renderPerfilBase(){
   el.innerHTML = `
     <div class="card pf-top"><span class="gorro xmas">🎅</span><div class="av">${esc((p.nome || m.nome || '?').charAt(0).toUpperCase())}</div>
       <h2>${esc(p.nome && p.nome !== 'Cliente' ? p.nome : pn(m.nome) || 'Você')}</h2><div class="nv">${nv.ic} Nível ${nv.nome}</div>
-      <div class="pf-stats"><div><b>${p.estrelas}</b><span>estrelinhas ⭐</span></div><div><b>${p.concluidos}</b><span>atendimentos</span></div><div><b>${(p.emblemas || []).length}/${R.EMBLEMAS.length}</b><span>emblemas</span></div></div>
+      <div class="pf-stats"><div><b>${p.estrelas}</b><span>estrelinhas ⭐</span></div><div><b>${p.concluidos}</b><span>atendimentos</span></div><div><b>${(p.emblemas || []).length}/${R.emblemas(S.cfg).length}</b><span>emblemas</span></div></div>
       ${px ? `<p class="small" style="margin-top:12px;color:#f6dcc8">Faltam ${px.min - p.concluidos} atendimento(s) para o nível ${px.ic} ${px.nome}</p>` : '<p class="small" style="margin-top:12px;color:#f3d58c">Você chegou ao nível máximo 💎</p>'}</div>
     <div class="card stack"><div class="row between"><h3>Próximo mimo</h3><span class="chip" style="background:var(--gold-soft);color:var(--gold)">${p.estrelas}⭐</span></div>
       ${prox ? `<p class="small"><b>${esc(prox.nome)}</b> · faltam ${prox.custo - p.estrelas}⭐</p><div class="prog"><i style="width:${pctProx}%"></i></div>` : '<p class="small">Você já pode trocar qualquer mimo da lista! 🎉</p>'}
       ${S.perfil === undefined ? '<p class="muted small">Carregando suas estrelinhas…</p>' : !S.perfil ? '<p class="muted small">Suas estrelinhas aparecem aqui depois do seu primeiro agendamento confirmado.</p>' : ''}</div>
-    <div class="card stack"><h3>Emblemas</h3><div class="badges">${R.EMBLEMAS.map(e => { const on = (p.emblemas || []).includes(e.id); return `<button class="bdg ${on ? '' : 'off'} ${novos.includes(e.id) ? 'novo' : ''}" data-act="emblema" data-id="${e.id}"><div class="md">${on ? e.ic : '🔒'}</div>${esc(e.nome)}</button>`; }).join('')}</div></div>
+    <div class="card stack"><h3>Emblemas</h3><div class="badges">${R.emblemas(S.cfg).map(e => { const on = (p.emblemas || []).includes(e.id); return `<button class="bdg ${on ? '' : 'off'} ${novos.includes(e.id) ? 'novo' : ''}" data-act="emblema" data-id="${e.id}"><div class="md">${on ? e.ic : '🔒'}</div>${esc(e.nome)}</button>`; }).join('')}</div></div>
     <div class="card"><h3>Troque suas estrelinhas</h3><p class="muted small" style="margin-top:4px">Escolha o mimo na hora de agendar. Ele é aplicado no dia do atendimento.</p>
       ${rc.catalogo.map(x => { const ok = p.estrelas >= x.custo; return `<div class="prem ${ok ? 'ok' : ''}"><span class="cu">${x.custo}⭐</span><span class="tx">${esc(x.nome)}<small>${ok ? 'Disponível pra você!' : `Faltam ${x.custo - p.estrelas}⭐`}</small></span>${ok ? `<button class="btn s p" data-act="usarRec" data-v="${esc(x.custo + '|' + x.nome)}">Usar</button>` : ''}</div>`; }).join('')}</div>
     <div class="card"><h3>Como ganhar estrelinhas</h3><ul class="small" style="margin:8px 0 0;padding-left:18px;line-height:1.7">
@@ -727,7 +727,7 @@ function renderPerfilBase(){
       ${rc.bonusNatal && natalOn() ? `<li><b>+${rc.bonusNatal}⭐ de bônus</b> nos atendimentos da Agenda de Natal 🎄</li>` : ''}
       <li>Emblemas desbloqueiam conforme você agenda, paga a entrada em dia e não falta</li></ul></div>
     <p class="muted small center">Perfil ligado ao WhatsApp ${esc(m.telefone)} · <a href="#" data-act="trocarPerfil" style="color:var(--rose)">trocar</a></p>`;
-  if (novos.length && S.perfil){ confete(); toast(`Novo emblema: ${R.EMBLEMAS.find(e => e.id === novos[0]).nome} 🎉`); lsSet(vistosK, [...vistos, ...novos]); $('#perfilDot').hidden = true; }
+  if (novos.length && S.perfil){ confete(); toast(`Novo emblema: ${(R.emblemas(S.cfg).find(e => e.id === novos[0]) || {}).nome || ''} 🎉`); lsSet(vistosK, [...vistos, ...novos]); $('#perfilDot').hidden = true; }
 }
 function renderRecBox(){
   const box = $('#recBox'); if (!box) return;
@@ -784,7 +784,7 @@ const ACTS = {
   hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= S.user?.nome || m.nome || ''; f.telefone.value ||= S.user?.telefone || m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
   encaixe: () => formEncaixe(),
   irAgendar: () => go('agendar'),
-  emblema: d => { const e = R.EMBLEMAS.find(x => x.id === d.id); const on = (perfilAtual().emblemas || []).includes(d.id); toast(`${e.ic} ${e.nome} — ${on ? 'conquistado!' : e.como}`); },
+  emblema: d => { const e = R.emblemas(S.cfg).find(x => x.id === d.id); if (!e) return; const on = (perfilAtual().emblemas || []).includes(d.id); toast(`${e.ic} ${e.nome} — ${on ? 'conquistado!' : e.como}`); },
   usarRec: d => { S.recSel = d.v; go('agendar'); toast('Escolha o serviço e o horário — o mimo já fica selecionado 🎁'); },
   sairConta: async () => { if (!confirm('Sair da sua conta neste aparelho?')) return; await conta.sair(); },
   trocarPerfil: () => { lsSet('cliente', {}); S.perfilKey = null; S.perfil = undefined; unsubPerfil && unsubPerfil(); unsubPerfil = null; renderPerfil(); },

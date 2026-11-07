@@ -400,7 +400,7 @@ const entRecebida = a => a.entrada && a.entrada.status === 'recebida' ? Number(a
 const chipEntrada = a => !a.entrada ? '' : a.entrada.status === 'recebida' ? `<span class="chip ent ok">Entrada ${brl(a.entrada.valor)} ✓</span>` : a.entrada.status === 'devolvida' ? `<span class="chip">Entrada devolvida</span>` : `<span class="chip ent">${a.entrada.forma === 'cartao' ? 'Cartão' : 'Pix'} de entrada ${brl(a.entrada.valor)} · conferir</span>`;
 const R = window.RECOMP;
 const recOn = () => R.cfgDe(C()).ativo;
-const perfilDe = tel => { const k = R.chave(tel); return k ? R.calcular(S.ags.filter(a => R.chave(a.telefone) === k), C()) : null; };
+const perfilDe = tel => { const k = R.chave(tel); return k ? R.calcular(S.ags.filter(a => R.chave(a.telefone) === k), C(), k) : null; };
 const recTxt = a => {
   if (!a.recompensa || !recOn()) return '';
   const p = perfilDe(a.telefone); const saldo = p ? p.estrelas : 0; const custo = Number(a.recompensa.custo) || 0;
@@ -529,7 +529,7 @@ function painelHorarios(sel){
     <div class="tg-grid">${cel.map(x => `<button class="tc ${x.est} ${x.passou ? 'passou' : ''}" ${x.est === 'livre' || x.est === 'trava' ? `data-act="tvCel" data-t="${x.t}" data-e="${x.e}"` : 'disabled'}>${toHM(x.t)}<small>${x.est === 'ag' ? esc(x.nome) : x.est === 'pausa' ? 'pausa' : x.est === 'trava' ? 'bloqueado' : 'livre'}</small></button>`).join('')}</div>
     <div class="tleg"><span><i style="background:var(--card);border:1px solid var(--line)"></i>livre</span><span><i style="background:var(--red-soft)"></i>bloqueado</span><span><i style="background:#e3ecfb"></i>cliente</span><span><i style="background:var(--line)"></i>pausa</span></div>
     <div class="muted small">${livres} livre${livres === 1 ? '' : 's'} · ${trav} bloqueado${trav === 1 ? '' : 's'}</div>
-    <div class="qk"><button class="btn s" data-act="tvFaixa" data-f="manha">Bloquear manhã</button><button class="btn s" data-act="tvFaixa" data-f="tarde">Bloquear tarde</button>
+    <div class="qk"><button class="btn p s" data-act="novo">+ Marcar cliente</button><button class="btn s" data-act="tvFaixa" data-f="manha">Bloquear manhã</button><button class="btn s" data-act="tvFaixa" data-f="tarde">Bloquear tarde</button>
       ${trav ? '<button class="btn g s" data-act="tvLiberarTudo">Liberar tudo</button>' : ''}
       <button class="btn r s" data-act="tvFechar">Fechar o dia</button>
       ${h.extra ? '' : '<button class="btn s ghost" data-act="tvExtra">Mudar horário do dia…</button>'}</div></details>`;
@@ -578,7 +578,7 @@ function renderAgenda(){
       ${a.entrada ? `<div class="mt">${chipEntrada(a)}</div>` : ''}
       <div class="acts"><button class="btn g s" data-act="confirmar" data-id="${a.id}">Confirmar</button><button class="btn r s" data-act="recusar" data-id="${a.id}">Recusar</button><a class="btn s" target="_blank" rel="noopener" href="${waLink(a.telefone, 'Oi ' + pn(a.nome) + '!')}">WhatsApp</a></div></div>`).join('')}</div>` : ''}
     <div class="row between"><div class="row"><button class="btn s ghost" data-act="semana" data-n="-7" aria-label="Semana anterior">‹</button><h2 class="cap">${mesAno}</h2><button class="btn s ghost" data-act="semana" data-n="7" aria-label="Próxima semana">›</button></div>
-      ${sel !== hoje ? `<button class="btn s" data-act="dia" data-d="${hoje}">Hoje</button>` : ''}</div>
+      <div class="row">${sel !== hoje ? `<button class="btn s" data-act="dia" data-d="${hoje}">Hoje</button>` : ''}<button class="btn p s" data-act="novo">+ Marcar</button></div></div>
     <div class="days">${days}</div>
     <div class="row between"><h3 class="cap">${dataLonga(sel)}</h3><span class="muted small">${validos.length} atend. · ${brl(previsto)}</span></div>
     ${painelHorarios(sel)}
@@ -587,32 +587,69 @@ function renderAgenda(){
   const dt = $('#trv'); if (dt) dt.ontoggle = () => { S.trvAberto = dt.open; };
 }
 
+/** Clientes conhecidas (agendamentos anteriores + contas do link) para preencher rápido */
+function clientesConhecidas(){
+  const m = new Map();
+  const add = (nome, tel) => { nome = String(nome || '').trim(); if (!nome) return; const k = nome.toLowerCase(); if (!m.has(k) || (!m.get(k).tel && tel)) m.set(k, { nome, tel: tel || '' }); };
+  (S.clientes || []).forEach(c => add(c.nome, c.telefone));
+  S.ags.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0)).forEach(a => add(a.nome, a.telefone));
+  return [...m.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+}
 function formAgendamento(pre = {}){
-  const sv = C().servicos || [];
-  sheet(`<h2>${pre.encaixeId ? 'Encaixar cliente' : 'Novo horário'}</h2><form class="mt" autocomplete="off">
-    <div class="field"><label class="f">Nome da cliente</label><input name="nome" required value="${esc(pre.nome || '')}"></div>
+  const sv = C().servicos || []; const cls = clientesConhecidas();
+  const en = N.entradaCfg(C());
+  sheet(`<h2>${pre.encaixeId ? 'Encaixar cliente' : 'Marcar horário'}</h2><p class="muted small">Marcação feita por você: já entra <b>confirmada</b> na agenda e ocupa o horário no link.</p><form class="mt" autocomplete="off">
+    <div class="field"><label class="f">Nome da cliente</label><input name="nome" list="dlClientes" required value="${esc(pre.nome || '')}" placeholder="Digite ou escolha uma cliente"><datalist id="dlClientes">${cls.map(c => `<option value="${esc(c.nome)}">${esc(c.tel)}</option>`).join('')}</datalist></div>
     <div class="field"><label class="f">WhatsApp</label><input name="telefone" inputmode="tel" value="${esc(pre.telefone || '')}" placeholder="(21) 99999-9999"></div>
     <div class="field"><label class="f">Serviço</label><select name="servico">${sv.map(s => `<option value="${s.id}" ${s.id === pre.servicoId ? 'selected' : ''}>${esc(s.nome)} · ${s.duracao} min · ${brl(precoDe(s))}</option>`).join('')}</select></div>
+    <div class="field" id="mAdds"></div>
     <div class="grid2 field"><div><label class="f">Data</label><input type="date" name="data" required value="${pre.data || S.sel}"></div><div><label class="f">Horário</label><input type="time" name="hora" required value="${pre.hora || ''}"></div></div>
-    <div class="field"><label class="f">Horários livres nesse dia</label><div class="slots" id="livres"></div></div>
+    <div class="field"><label class="f">Horários livres nesse dia <span class="muted" id="mDur"></span></label><div class="slots" id="livres"></div></div>
+    <div class="grid2 field"><div><label class="f">Valor total (R$)</label><input name="valor" inputmode="decimal"></div><div><label class="f">Entrada recebida (R$)</label><input name="entrada" inputmode="decimal" placeholder="0,00"></div></div>
+    <div class="field" id="mForma" hidden><label class="f">Entrada recebida em</label>${segFormas('pix')}</div>
+    ${N.natal(C()).ativo ? '<div class="field"><label class="f">Decoração</label><input name="deco" value="' + esc(pre.deco || '') + '" placeholder="Ex.: francesinha vermelha com floco dourado"></div>' : ''}
     <div class="field"><label class="f">Observação</label><input name="obs" value="${esc(pre.obs || '')}"></div>
     <div class="row mt"><button type="button" class="btn" data-act="fechar">Cancelar</button><button class="btn p grow">Salvar horário</button></div></form>`, sh => {
-    const f = sh.querySelector('form'); const box = $('#livres', sh);
-    const upd = () => {
-      const s = sv.find(x => x.id === f.servico.value);
-      const l = slotsDoDia(C(), ocupadosAdmin(), f.data.value, Number(s?.duracao) || 60, 0);
-      box.innerHTML = l.length ? l.map(h => `<button type="button" class="slot ${h === f.hora.value ? 'on' : ''}" data-h="${h}">${h}</button>`).join('') : '<span class="muted small">Nenhum horário livre (você ainda pode digitar um horário acima).</span>';
+    const f = sh.querySelector('form'); const box = $('#livres', sh); const adBox = $('#mAdds', sh);
+    let valorMexido = false; let adds = [];
+    const serv = () => sv.find(x => x.id === f.servico.value);
+    const addsDe = () => (serv()?.adicionais || []).filter(a => adds.includes(a.id));
+    const dur = () => (Number(serv()?.duracao) || 60) + addsDe().reduce((t, a) => t + (Number(a.duracao) || 0), 0);
+    const total = () => Math.round(((serv() ? precoDe(serv()) : 0) + addsDe().reduce((t, a) => t + (Number(a.preco) || 0), 0)) * 100) / 100;
+    const pintaAdds = () => {
+      const l = serv()?.adicionais || [];
+      adBox.hidden = !l.length;
+      adBox.innerHTML = l.length ? `<label class="f">Adicionais</label><div class="stack" style="gap:6px">${l.map(a => `<label class="tg"><input type="checkbox" data-ad="${a.id}" ${adds.includes(a.id) ? 'checked' : ''}>${esc(a.nome)} <span class="muted small">+ ${brl(a.preco)}${Number(a.duracao) ? ` · +${a.duracao} min` : ''}</span></label>`).join('')}</div>` : '';
     };
-    f.servico.onchange = upd; f.data.onchange = upd; upd();
+    const upd = () => {
+      if (!valorMexido) f.valor.value = String(total().toFixed(2)).replace('.', ',');
+      $('#mDur', sh).textContent = `· ${dur()} min`;
+      const l = slotsDoDia(C(), ocupadosAdmin(), f.data.value, dur(), 0);
+      box.innerHTML = l.length ? l.map(h => `<button type="button" class="slot ${h === f.hora.value ? 'on' : ''}" data-h="${h}">${h}</button>`).join('') : '<span class="muted small">Nenhum horário livre nesse dia. Você ainda pode digitar o horário acima (vale também para horário bloqueado ou fora do expediente).</span>';
+    };
+    f.servico.onchange = () => { adds = []; pintaAdds(); upd(); }; f.data.onchange = upd;
+    adBox.onchange = e => { const t = e.target.closest('[data-ad]'); if (!t) return; adds = adds.filter(x => x !== t.dataset.ad); if (t.checked) adds.push(t.dataset.ad); upd(); };
+    f.valor.oninput = () => { valorMexido = true; };
+    f.entrada.oninput = () => { $('#mForma', sh).hidden = !(num(f.entrada.value) > 0); };
+    f.nome.oninput = () => { const c = cls.find(x => x.nome.toLowerCase() === f.nome.value.trim().toLowerCase()); if (c && c.tel && !f.telefone.value) f.telefone.value = c.tel; };
+    pintaAdds(); upd();
     box.onclick = e => { const b = e.target.closest('.slot'); if (!b) return; f.hora.value = b.dataset.h; box.querySelectorAll('.slot').forEach(x => x.classList.toggle('on', x === b)); };
     f.onsubmit = async e => {
       e.preventDefault();
-      const s = sv.find(x => x.id === f.servico.value) || { id: '', nome: 'Serviço', duracao: 60, preco: 0 };
-      const ini = f.hora.value; const fim = toHM(toMin(ini) + (Number(s.duracao) || 60));
-      const data = { nome: f.nome.value.trim(), telefone: f.telefone.value.trim(), servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao) || 60, preco: precoDe(s), precoBase: Number(s.preco) || 0, data: f.data.value, ini, fim, obs: f.obs.value.trim(), status: 'confirmado', origem: pre.encaixeId ? 'encaixe' : 'manual', criadoEm: Date.now() };
+      const s = serv() || { id: '', nome: 'Serviço', duracao: 60, preco: 0 }; const ad = addsDe();
+      const ini = f.hora.value; const fim = toHM(toMin(ini) + dur());
+      const preco = num(f.valor.value) || total(); const vEnt = num(f.entrada.value);
+      const data = { nome: f.nome.value.trim(), telefone: f.telefone.value.trim(), servicoId: s.id, servicoNome: s.nome + (ad.length ? ' + ' + ad.map(a => a.nome).join(' + ') : ''), duracao: dur(), preco, precoBase: Number(s.preco) || 0, data: f.data.value, ini, fim, obs: f.obs.value.trim(), status: 'confirmado', origem: pre.encaixeId ? 'encaixe' : 'manual', criadoEm: Date.now() };
+      if (ad.length) data.adicionais = ad.map(a => ({ nome: a.nome, preco: Number(a.preco) || 0, duracao: Number(a.duracao) || 0 }));
+      if (f.deco && f.deco.value.trim()) data.deco = f.deco.value.trim();
       const conflito = agsAtivos().find(a => a.data === data.data && toMin(ini) < toMin(a.fim) && toMin(fim) > toMin(a.ini));
       if (conflito && !confirm(`Esse horário bate com ${conflito.nome} (${conflito.ini}–${conflito.fim}). Salvar mesmo assim?`)) return;
       const id = uid();
+      if (vEnt > 0){
+        const forma = (f.querySelector('[name=forma]:checked') || {}).value || 'pix';
+        data.entrada = { valor: vEnt, percentual: preco ? Math.round(vEnt / preco * 100) : 0, forma, status: 'recebida', recebidaEm: Date.now(), manual: true };
+        await store.add('vendas', { data: ymd(new Date()), descricao: data.servicoNome, tipo: 'entrada', cliente: data.nome, valor: vEnt, forma, agendamentoId: id, criadoEm: Date.now() });
+      }
       await store.set('agendamentos', id, data);
       await store.set('ocupados', id, { data: data.data, ini, fim });
       if (pre.encaixeId) await store.set('encaixes', pre.encaixeId, { status: 'encaixada', agendamentoId: id });
@@ -820,6 +857,17 @@ function juntaFaixas(lista){
   fx.forEach(([a, b]) => { const u = out[out.length - 1]; if (u && a <= u[1]) u[1] = Math.max(u[1], b); else out.push([a, b]); });
   return out.map(([a, b]) => `${toHM(a)}–${toHM(b)}`).join(', ');
 }
+function cardEstrelas(){
+  const r = R.cfgDe(C()); if (!r.ativo) return '';
+  const grupos = {}; S.ags.forEach(a => { const k = R.chave(a.telefone); if (k) (grupos[k] ||= []).push(a); });
+  const lista = Object.entries(grupos).map(([k, ags]) => { const p = R.calcular(ags, C(), k); const nm = ags.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0))[0].nome; return { k, nome: nm, p }; })
+    .sort((a, b) => b.p.estrelas - a.p.estrelas || a.nome.localeCompare(b.nome, 'pt-BR'));
+  return `<div class="card stack"><h3>⭐ Estrelinhas das clientes</h3>
+    <p class="muted small">Dê estrelinhas de presente (ou tire, se lançou errado). Salva na hora e aparece no perfil da cliente.</p>
+    <input id="estBusca" placeholder="Buscar cliente pelo nome ou WhatsApp" >
+    <div>${lista.slice(0, 300).map(x => `<div class="row between est" data-n="${esc((x.nome + ' ' + x.k).toLowerCase())}" style="flex-wrap:nowrap;padding:8px 0;border-top:1px solid var(--line)"><div style="min-width:0"><b class="small">${esc(x.nome)}</b><div class="muted small">${R.nivel(x.p.concluidos, C()).ic} ${esc(R.nivel(x.p.concluidos, C()).nome)} · ${x.p.concluidos} atend.${x.p.extra ? ` · ${x.p.extra > 0 ? '+' : ''}${x.p.extra} ajuste` : ''}</div></div>
+      <div class="row" style="flex-wrap:nowrap"><b style="min-width:52px;text-align:right">${x.p.estrelas}⭐</b><button class="btn r s" data-act="estAjuste" data-k="${x.k}" data-s="-1" aria-label="Tirar estrelinhas">−</button><button class="btn g s" data-act="estAjuste" data-k="${x.k}" data-s="1" aria-label="Dar estrelinhas">+</button></div></div>`).join('') || '<p class="muted small">Nenhuma cliente com WhatsApp ainda.</p>'}</div></div>`;
+}
 function cardBloqueios(){
   const c = C(); const hj = hojeYmd();
   const folgas = (c.bloqueios || []).filter(b => b >= hj).sort();
@@ -879,12 +927,18 @@ function renderAjustes(){
     <label class="tg"><input type="checkbox" id="aj-rec" ${R.cfgDe(c).ativo ? 'checked' : ''}>Programa de estrelinhas ativo</label>
     <div class="grid2"><div><label class="f">Estrelas por atendimento</label><input id="aj-rpa" type="number" min="1" value="${R.cfgDe(c).porAtendimento}"></div><div><label class="f">Bônus no Natal (+⭐)</label><input id="aj-rbn" type="number" min="0" value="${R.cfgDe(c).bonusNatal}"></div></div>
     <div><label class="f">Prêmios (um por linha: estrelas | prêmio)</label><textarea id="aj-cat" rows="6">${esc(R.cfgDe(c).catalogo.map(x => `${x.custo} | ${x.nome}`).join('\n'))}</textarea></div>
+    <div><label class="f">Níveis (um por linha: atendimentos | ícone | nome)</label><textarea id="aj-niv" rows="4">${esc(R.niveis(c).map(n => `${n.min} | ${n.ic} | ${n.nome}`).join('\n'))}</textarea><p class="muted small" style="margin-top:4px">Ex.: "6 | 🌟 | VIP" = a cliente vira VIP com 6 atendimentos concluídos.</p></div>
+    <div><label class="f">Emblemas (desmarque para esconder; troque o ícone e o nome se quiser)</label>
+      <div class="stack" style="gap:6px">${R.emblemas(c, true).map(e => `<div class="emb row" data-id="${e.id}" style="flex-wrap:nowrap"><input type="checkbox" data-k="ativo" ${e.ativo !== false ? 'checked' : ''} style="width:22px;min-height:0;flex:none"><input data-k="ic" value="${esc(e.ic)}" style="width:52px;flex:none;text-align:center;padding:8px 4px"><div style="flex:1;min-width:0"><input data-k="nome" value="${esc(e.nome)}"><div class="muted small" style="margin-top:2px">${esc(e.como)}</div></div></div>`).join('')}</div></div>
     <p class="muted small">A cliente acumula estrelas a cada atendimento concluído, ganha emblemas e escolhe o prêmio ao agendar. Você confirma o uso no "Finalizar e receber". Prêmio com "R$ de desconto" já abate do valor.</p>
+    <p class="muted small">Toque em <b>Salvar ajustes</b> no fim da página para gravar as mudanças do clube.</p>
     ${S.perfisErr ? '<div class="note">Para o perfil aparecer para as clientes, publique as regras novas do arquivo firestore.rules no Firebase (Firestore › Regras).</div>' : ''}</div>
+  ${cardEstrelas()}
   ${cardBloqueios()}
   <button class="btn p block" data-act="salvarAjustes">Salvar ajustes</button>
   <div class="card stack"><h3>Avisos no celular</h3><p class="muted small">Receber aviso quando chegar pedido de horário ou mensagem (com o app aberto em segundo plano).</p><button class="btn s" data-act="notif">Ativar avisos</button></div>
   ${DEMO ? '<button class="btn block" data-act="limparDemo">Apagar dados de demonstração</button>' : '<button class="btn r block" data-act="sair">Sair da conta</button>'}`;
+  { const eb = $('#estBusca'); if (eb) eb.oninput = () => { const q = eb.value.trim().toLowerCase(); const d = q.replace(/\D/g, ''); document.querySelectorAll('.est').forEach(r => { r.style.display = !q || r.dataset.n.includes(q) || (d && r.dataset.n.includes(d)) ? '' : 'none'; }); }; }
   $('#v-ajustes').querySelectorAll('.hrow [data-k=ativo]').forEach(cb => cb.onchange = () => { lerAjustes(); renderAjustes(); });
 }
 function lerAdicionais(txt, antigos){
@@ -908,7 +962,10 @@ function lerAjustes(){
   c.natal = { ativo: $('#aj-natal').checked, adicional: Math.max(0, num($('#aj-adic').value)), titulo: $('#aj-titulo').value.trim() || 'Agenda de Natal' };
   c.entrada = { ativo: $('#aj-ent').checked, percentual: Math.min(100, Math.max(1, Number($('#aj-pct').value) || 50)), tipoChave: $('#aj-tipo').value, chavePix: $('#aj-chave').value.trim(), recebedor: $('#aj-receb').value.trim() || 'Julia Marcico', cidade: $('#aj-cid').value.trim() || 'Rio de Janeiro', cartaoAtivo: $('#aj-card').checked, linkCartao: $('#aj-linkg').value.trim(), linksCartao: Object.fromEntries([...v.querySelectorAll('.aj-links')].map(i => [i.dataset.sid, i.value.trim()]).filter(x => x[1])) };
   c.recompensas = { ativo: $('#aj-rec').checked, porAtendimento: Math.max(1, Number($('#aj-rpa').value) || 10), bonusNatal: Math.max(0, Number($('#aj-rbn').value) || 0),
-    catalogo: $('#aj-cat').value.split('\n').map(l => { const [a, ...b] = l.split('|'); return { custo: Math.round(num(a)), nome: b.join('|').trim() }; }).filter(x => x.custo > 0 && x.nome) };
+    catalogo: $('#aj-cat').value.split('\n').map(l => { const [a, ...b] = l.split('|'); return { custo: Math.round(num(a)), nome: b.join('|').trim() }; }).filter(x => x.custo > 0 && x.nome),
+    niveis: $('#aj-niv').value.split('\n').map(l => { const [a, ic, ...b] = l.split('|'); return { min: Math.max(0, parseInt(a, 10) || 0), ic: (ic || '').trim() || '⭐', nome: b.join('|').trim() }; }).filter(x => x.nome),
+    emblemas: Object.fromEntries([...v.querySelectorAll('.emb')].map(r => [r.dataset.id, { ativo: r.querySelector('[data-k=ativo]').checked, ic: r.querySelector('[data-k=ic]').value.trim() || '⭐', nome: r.querySelector('[data-k=nome]').value.trim() || 'Emblema' }])),
+    ajustes: R.cfgDe(C()).ajustes };
   c.regras = $('#aj-regras').value.split('\n').map(x => x.trim()).filter(Boolean);
 }
 
@@ -1001,6 +1058,14 @@ const ACTS = {
     await salvarAgendaCfg(patch); Object.assign(S.draft, patch); renderAjustes(); toast('Liberado ✓');
   },
   bqPeriodoTirar: async d => { lerAjustes(); const c = C(); const patch = { bloqueios: (c.bloqueios || []).filter(x => x < d.de || x > d.ate) }; await salvarAgendaCfg(patch); Object.assign(S.draft, patch); renderAjustes(); toast('Período liberado ✓'); },
+  estAjuste: async d => {
+    const sinal = Number(d.s); const v = prompt(sinal > 0 ? 'Quantas estrelinhas dar de presente?' : 'Quantas estrelinhas tirar?', '10'); if (v === null) return;
+    const n = Math.abs(parseInt(v, 10) || 0); if (!n) return;
+    lerAjustes(); const rc = { ...(C().recompensas || {}) }; const aj = { ...(R.cfgDe(C()).ajustes) };
+    aj[d.k] = (Number(aj[d.k]) || 0) + sinal * n; if (!aj[d.k]) delete aj[d.k];
+    rc.ajustes = aj; await salvarAgendaCfg({ recompensas: rc }); S.draft.recompensas = { ...(S.draft.recompensas || {}), ajustes: aj }; renderAjustes(); agendarSync();
+    toast(sinal > 0 ? `+${n}⭐ dadas ✓` : `−${n}⭐ tiradas ✓`);
+  },
   bqVer: d => { S.sel = d.v; go('agenda'); },
   addBloq: () => { const v = $('#novoBloq').value; if (!v) return; lerAjustes(); S.draft.bloqueios = [...new Set([...(S.draft.bloqueios || []), v])]; renderAjustes(); },
   delBloq: d => { lerAjustes(); S.draft.bloqueios = (S.draft.bloqueios || []).filter(b => b !== d.b); renderAjustes(); },
@@ -1042,7 +1107,7 @@ async function syncPerfis(){
   S.ags.forEach(a => { const k = R.chave(a.telefone); if (k) (grupos[k] = grupos[k] || []).push(a); });
   const atual = Object.fromEntries(S.perfis.map(p => [p.id, p]));
   for (const [k, ags] of Object.entries(grupos)){
-    const p = R.calcular(ags, S.cfg); const o = atual[k] || {};
+    const p = R.calcular(ags, S.cfg, k); const o = atual[k] || {};
     const igual = ['nome', 'concluidos', 'ganhas', 'usadas', 'estrelas', 'ultimaVisita'].every(x => o[x] === p[x]) && JSON.stringify(o.emblemas || []) === JSON.stringify(p.emblemas);
     if (igual) continue;
     const novos = p.emblemas.filter(e => !(o.emblemas || []).includes(e));
@@ -1064,6 +1129,7 @@ function start(){
   });
   store.watch('agendamentos', x => { S.ags = x; render(); agendarSync(); });
   store.watch('encaixes', x => { S.enc = x; render(); });
+  store.watch('clientes', x => { S.clientes = x; });
   store.watch('vendas', x => { S.vendas = x; render(); });
   store.watch('despesas', x => { S.desp = x; render(); });
   store.watch('conversas', x => { S.convs = x; render(); });

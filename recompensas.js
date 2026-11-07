@@ -40,7 +40,19 @@
     const r = { ...PADRAO, ...((cfg && cfg.recompensas) || {}) };
     if (!Array.isArray(r.catalogo) || !r.catalogo.length) r.catalogo = PADRAO.catalogo;
     r.catalogo = r.catalogo.filter(x => x && x.nome && Number(x.custo) > 0).map(x => ({ custo: Number(x.custo), nome: String(x.nome) })).sort((a, b) => a.custo - b.custo);
+    r.ajustes = (r.ajustes && typeof r.ajustes === 'object') ? r.ajustes : {};
     return r;
+  };
+  /** Emblemas com os nomes/ícones que a Júlia escolheu (e só os ligados) */
+  const emblemas = (cfg, todos) => {
+    const ed = ((cfg && cfg.recompensas) || {}).emblemas || {};
+    return EMBLEMAS.map(e => ({ ...e, ...(ed[e.id] || {}), id: e.id, como: e.como })).filter(e => todos || e.ativo !== false);
+  };
+  /** Níveis editáveis: [{ min, ic, nome }] */
+  const niveis = cfg => {
+    const n = ((cfg && cfg.recompensas) || {}).niveis;
+    const l = Array.isArray(n) && n.length ? n.filter(x => x && x.nome).map(x => ({ min: Math.max(0, Number(x.min) || 0), ic: x.ic || '⭐', nome: String(x.nome) })) : NIVEIS;
+    const o = l.slice().sort((a, b) => a.min - b.min); if (o[0].min > 0) o.unshift({ min: 0, ic: '🌱', nome: 'Iniciante' }); return o;
   };
 
   /** Chave do perfil: só os números do WhatsApp, sem o 55 do Brasil */
@@ -49,18 +61,19 @@
     if (d.length >= 12 && d.startsWith('55')) d = d.slice(2);
     return d.length >= 10 ? d : '';
   }
-  const nivel = concluidos => NIVEIS.filter(n => concluidos >= n.min).pop();
-  const proximoNivel = concluidos => NIVEIS.find(n => n.min > concluidos) || null;
+  const nivel = (concluidos, cfg) => niveis(cfg).filter(n => concluidos >= n.min).pop();
+  const proximoNivel = (concluidos, cfg) => niveis(cfg).find(n => n.min > concluidos) || null;
   /** "R$10 de desconto" → 10 */
   const desconto = nome => { const m = /R\$\s*(\d+(?:[.,]\d+)?)/i.exec(nome || ''); return m && /desconto/i.test(nome) ? Number(m[1].replace(',', '.')) : 0; };
 
   /** Calcula o perfil de uma cliente a partir dos agendamentos dela */
-  function calcular(ags, cfg) {
+  function calcular(ags, cfg, k) {
     const r = cfgDe(cfg);
     const conc = ags.filter(a => a.status === 'concluido').sort((a, b) => (a.data + a.ini).localeCompare(b.data + b.ini));
     const faltas = ags.filter(a => a.status === 'falta').length;
     const natalDe = a => Number(a.adicionalNatal) > 0 || String(a.data || '').slice(5, 7) === '12';
-    const ganhas = conc.reduce((s, a) => s + r.porAtendimento + (natalDe(a) ? r.bonusNatal : 0), 0);
+    const extra = Number((r.ajustes || {})[k || chave((ags[0] || {}).telefone)]) || 0; // estrelinhas dadas/tiradas pela Júlia
+    const ganhas = Math.max(0, conc.reduce((s, a) => s + r.porAtendimento + (natalDe(a) ? r.bonusNatal : 0), 0) + extra);
     const usadas = conc.reduce((s, a) => s + (a.recompensa && a.recompensa.aplicada ? Number(a.recompensa.custo) || 0 : 0), 0);
     const porMes = {}; conc.forEach(a => { const m = String(a.data || '').slice(0, 7); porMes[m] = (porMes[m] || 0) + 1; });
     const ok = {
@@ -79,10 +92,10 @@
       nome: ultimo.trim().split(/\s+/)[0] || 'Cliente',
       concluidos: conc.length,
       ganhas, usadas, estrelas: Math.max(0, ganhas - usadas),
-      emblemas: EMBLEMAS.filter(e => ok[e.id]).map(e => e.id),
+      emblemas: emblemas(cfg).filter(e => ok[e.id]).map(e => e.id), extra,
       ultimaVisita: conc.length ? conc[conc.length - 1].data : ''
     };
   }
 
-  window.RECOMP = { PADRAO, EMBLEMAS, NIVEIS, cfgDe, chave, nivel, proximoNivel, desconto, calcular };
+  window.RECOMP = { PADRAO, EMBLEMAS, NIVEIS, emblemas, niveis, cfgDe, chave, nivel, proximoNivel, desconto, calcular };
 })();

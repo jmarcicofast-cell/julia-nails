@@ -100,3 +100,12 @@ Ficará assim:
 - A cliente marca os adicionais logo abaixo do serviço escolhido. O preço e o tempo somam: os horários livres, a entrada e o pedido já consideram o total.
 - No painel, o pedido chega como "Mão + Francesinha" com o valor total.
 - Se tiver adicional marcado e o serviço usar link de cartão de valor fixo, o app usa o link geral (a cliente digita o valor).
+
+## Marcação manual (painel)
+- Botão **+ Marcar** no topo da Agenda (e "+ Marcar cliente" no quadro de horários do dia).
+- Nome com sugestão das clientes que já agendaram (preenche o WhatsApp), serviço + adicionais, horários livres já com o tempo total, valor total editável e entrada já recebida (Pix, dinheiro, débito ou crédito — vai para o financeiro).
+- Pode digitar qualquer horário, inclusive bloqueado ou fora do expediente. Entra como confirmado e ocupa o horário no link.
+
+## Clube de recompensas editável
+- Ajustes › Recompensas: estrelas por atendimento, bônus de Natal, prêmios, **níveis** (`atendimentos | ícone | nome`) e **emblemas** (ligar/desligar, trocar ícone e nome). Grave com "Salvar ajustes".
+- Ajustes › Estrelinhas das clientes: busca pela cliente e botões − / + para tirar ou dar estrelinhas. Salva na hora.
