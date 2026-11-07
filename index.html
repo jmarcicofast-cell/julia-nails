@@ -333,7 +333,7 @@ const DEFAULT_CONFIG = {
   },
   bloqueios: [],
   servicos: [
-    { id: 's1', nome: 'Mão', duracao: 45, preco: 35 },
+    { id: 's1', nome: 'Mão', duracao: 45, preco: 35, adicionais: [{ id: 'a1', nome: 'Francesinha', preco: 10, duracao: 15 }, { id: 'a2', nome: 'Reparo de unha', preco: 5, duracao: 10 }] },
     { id: 's2', nome: 'Pé', duracao: 45, preco: 40 },
     { id: 's3', nome: 'Pé e mão', duracao: 90, preco: 70 },
     { id: 's4', nome: 'Esmaltação em gel', duracao: 60, preco: 60 },
@@ -849,7 +849,9 @@ function renderAjustes(){
     <div><label class="f">Mensagem de boas-vindas no link</label><textarea id="aj-boas">${esc(c.boasVindas)}</textarea></div></div>
   <div class="card"><div class="row between"><h3>Serviços</h3><button class="btn s" data-act="addServ">+ Serviço</button></div>
     ${(c.servicos || []).map((s, i) => `<div class="serv mt"><input data-k="nome" value="${esc(s.nome)}" placeholder="Nome do serviço">
-      <div class="grid3"><div><span class="f">Duração (min)</span><input data-k="duracao" type="number" inputmode="numeric" min="5" step="5" value="${s.duracao}"></div><div><span class="f">Preço (R$)</span><input data-k="preco" inputmode="decimal" value="${String(s.preco).replace('.', ',')}"></div><button type="button" class="btn s r" data-act="delServ" data-i="${i}">Remover</button></div></div>`).join('')}</div>
+      <div class="grid3"><div><span class="f">Duração (min)</span><input data-k="duracao" type="number" inputmode="numeric" min="5" step="5" value="${s.duracao}"></div><div><span class="f">Preço (R$)</span><input data-k="preco" inputmode="decimal" value="${String(s.preco).replace('.', ',')}"></div><button type="button" class="btn s r" data-act="delServ" data-i="${i}">Remover</button></div>
+      <div class="mt"><span class="f">Adicionais deste serviço (um por linha: nome | preço | minutos a mais)</span><textarea data-k="adicionais" rows="${Math.max(2, (s.adicionais || []).length + 1)}" placeholder="Francesinha | 10 | 15&#10;Reparo de unha | 5 | 10">${esc((s.adicionais || []).map(a => `${a.nome} | ${String(a.preco).replace('.', ',')} | ${a.duracao || 0}`).join('\n'))}</textarea></div></div>`).join('')}
+    <p class="muted small mt">Os adicionais aparecem para a cliente quando ela escolhe o serviço. O preço e o tempo somam no horário e na entrada.</p></div>
   <div class="card"><h3>Horário de atendimento</h3>
     ${[1, 2, 3, 4, 5, 6, 0].map(d => { const h = (c.horarios || {})[d] || {}; return `<div class="hrow ${h.ativo ? '' : 'off'} mt" data-d="${d}">
       <label class="tg"><input type="checkbox" data-k="ativo" ${h.ativo ? 'checked' : ''}>${DIAS_LONGO[d]}${h.ativo ? '' : ' <span class="muted small">· fechado</span>'}</label>
@@ -885,12 +887,19 @@ function renderAjustes(){
   ${DEMO ? '<button class="btn block" data-act="limparDemo">Apagar dados de demonstração</button>' : '<button class="btn r block" data-act="sair">Sair da conta</button>'}`;
   $('#v-ajustes').querySelectorAll('.hrow [data-k=ativo]').forEach(cb => cb.onchange = () => { lerAjustes(); renderAjustes(); });
 }
+function lerAdicionais(txt, antigos){
+  return String(txt || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const [nome, preco, min] = l.split('|').map(x => (x || '').trim());
+    const velho = (antigos || []).find(a => a.nome.toLowerCase() === String(nome).toLowerCase());
+    return { id: velho?.id || uid(), nome, preco: num(preco || '0'), duracao: Math.max(0, parseInt(min, 10) || 0) };
+  }).filter(a => a.nome);
+}
 function lerAjustes(){
   const c = S.draft; const v = $('#v-ajustes');
   c.nome = $('#aj-nome').value.trim() || 'Meu espaço';
   c.whatsapp = $('#aj-whats').value.trim();
   c.boasVindas = $('#aj-boas').value.trim();
-  c.servicos = [...v.querySelectorAll('.serv')].map((r, i) => ({ id: c.servicos[i]?.id || uid(), nome: r.querySelector('[data-k=nome]').value.trim(), duracao: Number(r.querySelector('[data-k=duracao]').value) || 30, preco: num(r.querySelector('[data-k=preco]').value) }));
+  c.servicos = [...v.querySelectorAll('.serv')].map((r, i) => ({ id: c.servicos[i]?.id || uid(), nome: r.querySelector('[data-k=nome]').value.trim(), duracao: Number(r.querySelector('[data-k=duracao]').value) || 30, preco: num(r.querySelector('[data-k=preco]').value), adicionais: lerAdicionais(r.querySelector('[data-k=adicionais]').value, c.servicos[i]?.adicionais) }));
   c.horarios = {};
   v.querySelectorAll('.hrow').forEach(r => { const g = k => r.querySelector(`[data-k=${k}]`); c.horarios[r.dataset.d] = { ativo: g('ativo').checked, ini: g('ini').value || '09:00', fim: g('fim').value || '18:00', pIni: g('pIni').value || '', pFim: g('pFim').value || '' }; });
   { const v = $('#aj-int').value; c.passoServico = v === 'servico'; if (v !== 'servico') c.intervalo = Number(v) || 30; }

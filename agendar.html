@@ -74,6 +74,13 @@ body:not(.sem-login) #acesso{display:none}
 .step>span{width:26px;height:26px;border-radius:50%;background:var(--rose-soft);color:var(--rose);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
 .dim{opacity:.45;pointer-events:none}
 .servs{display:grid;gap:8px}
+.adds{display:grid;gap:6px;margin-top:2px}
+.adds h4{font:700 13px Manrope,sans-serif;color:var(--muted);margin:4px 0 2px}
+.ad{display:flex;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--card)}
+.ad input{width:20px;height:20px;min-height:0;accent-color:var(--rose);flex:none}
+.ad span{flex:1}.ad small{display:block;color:var(--muted);font-size:12px}
+.ad b{white-space:nowrap;font-size:14px}
+.ad.on{border-style:solid;border-color:var(--rose);background:var(--rose-soft)}
 .sv{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;width:100%;border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:12px 14px;font:inherit;color:inherit;cursor:pointer}
 .sv small{display:block;color:var(--muted);font-size:12.5px}
 .sv b.pr{font-family:Fraunces,serif;font-size:17px;white-space:nowrap}
@@ -387,7 +394,7 @@ const DEFAULT_CONFIG = {
   horarios: { 0:{ativo:false}, 1:{ativo:false}, 2:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 3:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 4:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 5:{ativo:true,ini:'09:00',fim:'19:00',pIni:'12:00',pFim:'13:00'}, 6:{ativo:true,ini:'08:00',fim:'16:00',pIni:'',pFim:''} },
   bloqueios: [],
   entrada: { ativo: true, percentual: 50, tipoChave: 'email', chavePix: 'exemplo@juliamarcico.com', recebedor: 'Julia Marcico', cidade: 'Rio de Janeiro', cartaoAtivo: true, linkCartao: 'https://exemplo.com/pagar' },
-  servicos: [ { id:'s1',nome:'Mão',duracao:45,preco:35 }, { id:'s2',nome:'Pé',duracao:45,preco:40 }, { id:'s3',nome:'Pé e mão',duracao:90,preco:70 }, { id:'s4',nome:'Esmaltação em gel',duracao:60,preco:60 }, { id:'s5',nome:'Alongamento em gel',duracao:120,preco:150 }, { id:'s6',nome:'Manutenção do alongamento',duracao:90,preco:100 } ]
+  servicos: [ { id:'s1',nome:'Mão',duracao:45,preco:35,adicionais:[{id:'a1',nome:'Francesinha',preco:10,duracao:15},{id:'a2',nome:'Reparo de unha',preco:5,duracao:10}] }, { id:'s2',nome:'Pé',duracao:45,preco:40 }, { id:'s3',nome:'Pé e mão',duracao:90,preco:70 }, { id:'s4',nome:'Esmaltação em gel',duracao:60,preco:60 }, { id:'s5',nome:'Alongamento em gel',duracao:120,preco:150 }, { id:'s6',nome:'Manutenção do alongamento',duracao:90,preco:100 } ]
 };
 
 /** Expediente do dia: dia extra aberto > folga > horário da semana */
@@ -443,6 +450,12 @@ const me = () => lsGet('cliente') || {};
 const salvarMe = (nome, telefone) => { lsSet('cliente', { nome, telefone }); ligarPerfil(); };
 const meusIds = () => lsGet('meusAgs') || [];
 const servAtual = () => (S.cfg?.servicos || []).find(s => s.id === S.serv);
+/** Adicionais marcados do serviço escolhido */
+const addsSel = () => { const s = servAtual(); return (s?.adicionais || []).filter(a => (S.adds || []).includes(a.id)); };
+const durTotal = () => (Number(servAtual()?.duracao) || 60) + addsSel().reduce((t, a) => t + (Number(a.duracao) || 0), 0);
+const precoTotal = () => { const s = servAtual(); return s ? Math.round((precoDe(s) + addsSel().reduce((t, a) => t + (Number(a.preco) || 0), 0)) * 100) / 100 : 0; };
+const nomeComAdds = () => { const s = servAtual(); const ad = addsSel(); return s ? s.nome + (ad.length ? ' + ' + ad.map(a => a.nome).join(' + ') : '') : ''; };
+const cartaoPara = (cfg, sid) => { const l = N.linkCartao(cfg, sid); if (l && l.fixo && addsSel().length){ const g = N.linkCartao({ ...cfg, entrada: { ...N.entradaCfg(cfg), linksCartao: {} } }, sid); return g; } return l; };
 const LABEL = { pendente: 'Aguardando confirmação', confirmado: 'Confirmado ✓', concluido: 'Concluído', cancelado: 'Cancelado', recusado: 'Não foi possível', falta: 'Falta registrada' };
 const N = window.NATAL;
 const precoDe = s => N.precoFinal(S.cfg, s);
@@ -508,16 +521,19 @@ function calendario(dias){
     <div class="cal">${['D','S','T','Q','Q','S','S'].map(x => `<span class="wd">${x}</span>`).join('')}${cel}</div>
     <div class="cal-leg"><span><i></i>tem horário livre</span></div>`;
 }
+function blocoAdds(){ const s = servAtual(); return s && (s.adicionais || []).length ? `<div class="adds"><h4>✨ Quer adicionar? (opcional)</h4>${s.adicionais.map(a => { const on = (S.adds || []).includes(a.id); return `<label class="ad ${on ? 'on' : ''}"><input type="checkbox" data-add="${a.id}" ${on ? 'checked' : ''}><span>${esc(a.nome)}${Number(a.duracao) ? `<small>+${a.duracao} min</small>` : ''}</span><b>+ ${brl(a.preco)}</b></label>`; }).join('')}
+      ${addsSel().length ? `<p class="small" style="text-align:right">Total: <b>${brl(precoTotal())}</b> · ${durTotal()} min</p>` : ''}</div>` : ''; }
 function renderPassos(){
   const c = S.cfg; const el = $('#passos');
   if (!c){ el.innerHTML = '<div class="card center muted">Agenda em configuração. Volte em breve 💕</div>'; return; }
-  const sv = c.servicos || []; const s = servAtual(); const dur = Number(s?.duracao) || 60;
+  const sv = c.servicos || []; const s = servAtual(); const dur = durTotal();
   const dias = diasDisponiveis().map(d => ({ d, livres: s ? slotsDoDia(c, S.ocup, d, dur, c.antecedenciaHoras).length : 1 }));
   const slots = s && S.dia ? slotsDoDia(c, S.ocup, S.dia, dur, c.antecedenciaHoras) : [];
   if (S.hora && !slots.includes(S.hora)) S.hora = null;
   el.innerHTML = `
   <div class="card stack"><div class="step"><span>1</span><h3>Escolha o serviço</h3></div>
-    <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(precoDe(x))}</b></button>`).join('')}</div></div>
+    <div class="servs">${sv.map(x => `<button class="sv ${x.id === S.serv ? 'on' : ''}" data-act="serv" data-id="${x.id}"><span><b>${esc(x.nome)}</b><small>${x.duracao} min</small></span><b class="pr">${brl(precoDe(x))}</b></button>${x.id === S.serv ? blocoAdds() : ''}`).join('')}</div>
+</div>
   <div class="card stack ${s ? '' : 'dim'}"><div class="step"><span>2</span><h3>Escolha o dia</h3></div>
     ${calendario(dias)}</div>
   <div class="card stack ${s && S.dia ? '' : 'dim'}"><div class="step"><span>3</span><h3>Escolha o horário</h3></div>
@@ -525,13 +541,13 @@ function renderPassos(){
   const form = $('#dados');
   form.hidden = !(s && S.dia && S.hora);
   if (!form.hidden){
-    const pr = precoDe(s); const en = N.valorEntrada(c, pr);
-    $('#resumo').innerHTML = `<b>${esc(s.nome)}</b> · ${brl(pr)}<br><span class="muted">${dataLonga(S.dia)}</span> às <b>${S.hora}</b>`;
+    const pr = precoTotal(); const en = N.valorEntrada(c, pr);
+    $('#resumo').innerHTML = `<b>${esc(nomeComAdds())}</b> · ${brl(pr)}<br><span class="muted">${dataLonga(S.dia)}</span> às <b>${S.hora}</b>`;
     $('#entradaBox').innerHTML = en ? `<div class="ent"><span>Entrada para reservar (${pct()}%)</span><b>${brl(en)}</b><span class="tot">Restante no dia do atendimento</span><span class="tot" style="text-align:right">${brl(pr - en)}</span></div>` : '';
     renderRecBox();
     $('#decoBox').hidden = !natalOn(); $('#aceiteBox').hidden = !N.regras(c).length;
     $('#btnEnviar').textContent = en ? 'Continuar para pagar a entrada' : 'Solicitar horário';
-    $('#dadosNota').textContent = en ? `No próximo passo você paga a entrada ${N.temPix(c) && N.linkCartao(c, s.id) ? 'por Pix ou cartão' : N.temPix(c) ? 'por Pix' : 'no cartão'} aqui mesmo, e o horário fica reservado.` : 'O horário fica reservado e a confirmação chega pelo WhatsApp.';
+    $('#dadosNota').textContent = en ? `No próximo passo você paga a entrada ${N.temPix(c) && cartaoPara(c, s.id) ? 'por Pix ou cartão' : N.temPix(c) ? 'por Pix' : 'no cartão'} aqui mesmo, e o horário fica reservado.` : 'O horário fica reservado e a confirmação chega pelo WhatsApp.';
   }
 }
 
@@ -545,18 +561,19 @@ $('#dados').addEventListener('submit', async e => {
   const s = servAtual(); const c = S.cfg;
   if (!livre()){ toast('Esse horário acabou de ser ocupado. Escolha outro.'); S.hora = null; renderPassos(); return; }
   const recV = f.querySelector('[name=rec]')?.value || ''; const recP = recV ? R.cfgDe(c).catalogo.find(x => `${x.custo}|${x.nome}` === recV) : null;
-  const id = uid(); const preco = precoDe(s); const fim = toHM(toMin(S.hora) + Number(s.duracao));
-  const ag = { nome, telefone: tel, servicoId: s.id, servicoNome: s.nome, duracao: Number(s.duracao), preco, precoBase: Number(s.preco) || 0, adicionalNatal: natalOn() ? Number(N.natal(c).adicional) || 0 : 0, data: S.dia, ini: S.hora, fim, deco, obs: f.obs.value.trim(), aceitouRegras: !!f.aceite.checked, status: 'pendente', origem: 'link', criadoEm: Date.now() };
+  const id = uid(); const preco = precoTotal(); const dur = durTotal(); const fim = toHM(toMin(S.hora) + dur);
+  const ag = { nome, telefone: tel, servicoId: s.id, servicoNome: nomeComAdds(), duracao: dur, preco, precoBase: Number(s.preco) || 0, adicionalNatal: natalOn() ? Number(N.natal(c).adicional) || 0 : 0, data: S.dia, ini: S.hora, fim, deco, obs: f.obs.value.trim(), aceitouRegras: !!f.aceite.checked, status: 'pendente', origem: 'link', criadoEm: Date.now() };
+  if (addsSel().length) ag.adicionais = addsSel().map(a => ({ nome: a.nome, preco: Number(a.preco) || 0, duracao: Number(a.duracao) || 0 }));
   if (recP) ag.recompensa = { nome: recP.nome, custo: recP.custo };
   if (S.user){ ag.clienteUid = S.user.uid; ag.email = S.user.email; }
   salvarMe(nome, tel);
   const en = N.valorEntrada(c, preco);
   if (en) telaPix(id, ag, en); else enviarPedido(id, ag, $('#btnEnviar'));
 });
-function livre(){ const s = servAtual(); return !!(s && S.dia && S.hora && slotsDoDia(S.cfg, S.ocup, S.dia, Number(s.duracao), S.cfg.antecedenciaHoras).includes(S.hora)); }
+function livre(){ const s = servAtual(); return !!(s && S.dia && S.hora && slotsDoDia(S.cfg, S.ocup, S.dia, durTotal(), S.cfg.antecedenciaHoras).includes(S.hora)); }
 
 function telaPix(id, ag, valor, metodo){
-  const pix = N.temPix(S.cfg); const card = N.linkCartao(S.cfg, ag.servicoId);
+  const pix = N.temPix(S.cfg); const card = cartaoPara(S.cfg, ag.servicoId);
   metodo = metodo || (pix ? 'pix' : 'cartao');
   if (metodo === 'pix' && !pix) metodo = 'cartao';
   if (metodo === 'cartao' && !card) metodo = 'pix';
@@ -761,7 +778,7 @@ $('#chatForm').addEventListener('submit', async e => {
 /* ================= CLIQUES ================= */
 const ACTS = {
   fechar: () => closeSheet(),
-  serv: d => { S.serv = d.id; S.hora = null; renderPassos(); },
+  serv: d => { if (S.serv !== d.id) S.adds = []; S.serv = d.id; S.hora = null; renderPassos(); },
   dia: d => { S.dia = d.d; S.hora = null; renderPassos(); },
   mes: d => { const ms = [...new Set(diasDisponiveis().map(x => x.slice(0, 7)))]; const i = ms.indexOf(S.mes) + Number(d.n); if (ms[i]) { S.mes = ms[i]; renderPassos(); } },
   hora: d => { S.hora = d.h; renderPassos(); const f = $('#dados'); const m = me(); f.nome.value ||= S.user?.nome || m.nome || ''; f.telefone.value ||= S.user?.telefone || m.telefone || ''; setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); },
@@ -773,6 +790,7 @@ const ACTS = {
   trocarPerfil: () => { lsSet('cliente', {}); S.perfilKey = null; S.perfil = undefined; unsubPerfil && unsubPerfil(); unsubPerfil = null; renderPerfil(); },
   copiarPix: () => { const c = S.pixAtual || ''; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => toast('Código Pix copiado ✓ Cole no app do banco')).catch(() => { const r = document.createRange(); r.selectNodeContents($('#pixCode')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Toque e segure para copiar'); }); }
 };
+document.addEventListener('change', e => { const t = e.target.closest('[data-add]'); if (!t) return; const id = t.dataset.add; S.adds = (S.adds || []).filter(x => x !== id); if (t.checked) S.adds.push(id); renderPassos(); });
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault(); fn(t.dataset, t); });
 
 /* ================= CONTA DA CLIENTE (e-mail e senha) ================= */

@@ -87,3 +87,16 @@ Ficará assim:
 - Dia de folga ou dia em que não atende (ex.: segunda): "Reabrir o dia" ou "Abrir com outro horário…" (vale só para aquele dia).
 - Em **Ajustes › Folgas, férias e horários bloqueados**: bloqueia um dia ou um período inteiro (De/Até) e mostra a lista de tudo que está bloqueado, com botão para liberar.
 - Datas que já passaram saem da lista sozinhas.
+
+## Conta da cliente (e-mail e senha)
+- O link (agendar.html) agora abre com "Entrar" / "Criar conta". A cliente cria a conta com nome, WhatsApp, e-mail e senha; depois entra só com e-mail e senha, em qualquer aparelho. Tem "Esqueci minha senha".
+- O painel (index.html) continua só para a Júlia. Quem abrir o painel por engano vê o botão "💅 Quero agendar meu horário", que leva para o link.
+- O link certo para mandar às clientes é o que termina em **/agendar.html** (botão "Link" do painel).
+- **Publique as regras novas:** Firebase › Firestore › Regras › cole o conteúdo de firestore.rules › Publicar.
+- No Firebase › Authentication › Método de login, o **E-mail/senha** precisa estar ativado (o mesmo que a Júlia usa para entrar no painel).
+
+## Adicionais por serviço
+- Em Ajustes › Serviços, cada serviço tem o campo "Adicionais" (um por linha: `nome | preço | minutos a mais`). Ex.: `Francesinha | 10 | 15`.
+- A cliente marca os adicionais logo abaixo do serviço escolhido. O preço e o tempo somam: os horários livres, a entrada e o pedido já consideram o total.
+- No painel, o pedido chega como "Mão + Francesinha" com o valor total.
+- Se tiver adicional marcado e o serviço usar link de cartão de valor fixo, o app usa o link geral (a cliente digita o valor).
