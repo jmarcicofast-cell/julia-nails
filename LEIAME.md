@@ -109,3 +109,7 @@ Ficará assim:
 ## Clube de recompensas editável
 - Ajustes › Recompensas: estrelas por atendimento, bônus de Natal, prêmios, **níveis** (`atendimentos | ícone | nome`) e **emblemas** (ligar/desligar, trocar ícone e nome). Grave com "Salvar ajustes".
 - Ajustes › Estrelinhas das clientes: busca pela cliente e botões − / + para tirar ou dar estrelinhas. Salva na hora.
+
+## Correções e testes
+
+Consulte [docs/CORRECOES.md](docs/CORRECOES.md) para as correções da primeira etapa, testes automatizados e o plano de migração do Firebase. As mudanças de segurança e reserva concorrente precisam ser implantadas com migração; não substitua as regras de produção isoladamente.

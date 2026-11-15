@@ -237,6 +237,7 @@ body:not(.sem-login) #acesso{display:none}
 .bengala{height:6px;border-radius:4px;margin:14px auto 0;max-width:180px;background:repeating-linear-gradient(135deg,#9e1b24 0 7px,#fff6ec 7px 12px)}
 [data-natal] .card.stack>.step h3:after{content:" ✦";color:var(--gold);font-size:12px}
 </style>
+<link rel="stylesheet" href="responsive.css">
 </head>
 <body class="sem-login">
 
@@ -410,10 +411,11 @@ function travasDoDia(cfg, dataStr){
   return (cfg.travas || []).filter(x => x.startsWith(dataStr + ' ')).map(x => x.slice(11).split('-').map(toMin));
 }
 function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
-  if (!cfg || !dataStr) return [];
+  if (!cfg || !dataStr || !Number.isFinite(dur) || dur <= 0 || dur > 1440) return [];
   const d = parseYmd(dataStr); const h = expediente(cfg, dataStr);
   if (!h) return [];
   const ini = toMin(h.ini), fim = toMin(h.fim), step = Number(cfg.intervalo) || 30;
+  if (!Number.isFinite(step) || step <= 0) return [];
   const porServico = cfg.passoServico !== false;
   const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
   const occ = ocupados.filter(o => o.data === dataStr).map(o => [toMin(o.ini), toMin(o.fim)]);
@@ -446,9 +448,10 @@ function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
 
 /* ================= ESTADO ================= */
 const S = { cfg: null, ocup: [], serv: null, dia: null, hora: null, meus: {}, msgs: [], conv: null };
-const me = () => lsGet('cliente') || {};
-const salvarMe = (nome, telefone) => { lsSet('cliente', { nome, telefone }); ligarPerfil(); };
-const meusIds = () => lsGet('meusAgs') || [];
+const accountKey = key => S.user ? 'conta:' + S.user.uid + ':' + key : 'sem-conta:' + key;
+const me = () => S.user ? lsGet(accountKey('cliente')) || {} : {};
+const salvarMe = (nome, telefone) => { lsSet(accountKey('cliente'), { nome, telefone }); ligarPerfil(); };
+const meusIds = () => lsGet(accountKey('meusAgs')) || [];
 const servAtual = () => (S.cfg?.servicos || []).find(s => s.id === S.serv);
 /** Adicionais marcados do serviço escolhido */
 const addsSel = () => { const s = servAtual(); return (s?.adicionais || []).filter(a => (S.adds || []).includes(a.id)); };
@@ -574,6 +577,7 @@ function livre(){ const s = servAtual(); return !!(s && S.dia && S.hora && slots
 
 function telaPix(id, ag, valor, metodo){
   const pix = N.temPix(S.cfg); const card = cartaoPara(S.cfg, ag.servicoId);
+  if (!pix && !card){ toast('A entrada deste serviço ainda não tem um meio de pagamento disponível. Entre em contato pelo WhatsApp.'); return; }
   metodo = metodo || (pix ? 'pix' : 'cartao');
   if (metodo === 'pix' && !pix) metodo = 'cartao';
   if (metodo === 'cartao' && !card) metodo = 'pix';
@@ -606,6 +610,7 @@ function telaPix(id, ag, valor, metodo){
 }
 
 async function enviarPedido(id, ag, btn){
+  if (btn.disabled || !S.user) return;
   const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Enviando…';
   try {
     await store.set('agendamentos', id, ag);
@@ -613,7 +618,7 @@ async function enviarPedido(id, ag, btn){
   } catch (err) {
     console.error(err); toast('Não consegui enviar. Tente de novo.'); btn.disabled = false; btn.textContent = txt; return;
   }
-  lsSet('meusAgs', [id, ...meusIds()].slice(0, 20)); watchMeus();
+  lsSet(accountKey('meusAgs'), [id, ...meusIds()].slice(0, 20)); watchMeus();
   btn.disabled = false; btn.textContent = txt;
   const f = $('#dados'); f.obs.value = ''; f.deco.value = ''; f.aceite.checked = false;
   S.serv = null; S.dia = null; S.hora = null; S.recSel = ''; renderPassos();
@@ -656,13 +661,15 @@ function formEncaixe(){
 /* ================= MEUS HORÁRIOS ================= */
 const unsubMeus = {};
 function watchMeus(){
+  if (!S.user) return;
+  const owner = S.user.uid;
   meusIds().forEach(id => {
     if (unsubMeus[id]) return;
-    unsubMeus[id] = store.watchDoc('agendamentos', id, a => { S.meus[id] = a; if (S.tab === 'meus') renderMeus(); });
+    unsubMeus[id] = store.watchDoc('agendamentos', id, a => { if (S.user?.uid !== owner) return; S.meus[id] = a?.clienteUid === owner ? a : null; if (S.tab === 'meus') renderMeus(); });
   });
 }
 function renderMeus(){
-  const el = $('#v-meus'); const lista = Object.values(S.meus).filter(Boolean).sort((a, b) => (b.data + b.ini).localeCompare(a.data + a.ini));
+  const el = $('#v-meus'); const lista = Object.values(S.meus).filter(a => a && S.user && a.clienteUid === S.user.uid).sort((a, b) => (b.data + b.ini).localeCompare(a.data + a.ini));
   const w = S.cfg?.whatsapp;
   el.innerHTML = lista.length ? `<div class="card">${lista.map(a => `<div class="meu"><div><b>${esc(a.servicoNome)}</b><div class="muted small">${dataLonga(a.data)} às ${a.ini}</div>${a.entrada ? `<div class="small" style="margin-top:2px;color:${a.entrada.status === 'recebida' ? 'var(--green)' : 'var(--gold)'}">Entrada ${brl(a.entrada.valor)} · ${a.entrada.status === 'recebida' ? 'recebida ✓' : a.entrada.status === 'devolvida' ? 'devolvida' : 'em conferência'}</div>` : ''}</div><span class="chip ${a.status}">${LABEL[a.status] || a.status}</span></div>`).join('')}</div>
     ${w ? `<a class="btn block" target="_blank" rel="noopener" href="${waLink(w, 'Oi! Preciso falar sobre meu horário.')}">Precisa remarcar ou cancelar? Fale no WhatsApp</a>` : ''}`
@@ -675,7 +682,8 @@ function ligarPerfil(){
   const k = R.chave(me().telefone);
   if (!k || k === S.perfilKey) return;
   S.perfilKey = k; S.perfil = undefined; unsubPerfil && unsubPerfil();
-  unsubPerfil = store.watchDoc('perfis', k, p => { S.perfil = p; avisarEmblemas(); if (S.tab === 'perfil') renderPerfil(); if (S.tab === 'agendar') renderRecBox(); }, () => { S.perfil = null; if (S.tab === 'perfil') renderPerfil(); });
+  const owner = S.user?.uid;
+  unsubPerfil = store.watchDoc('perfis', k, p => { if (!owner || S.user?.uid !== owner) return; S.perfil = p; avisarEmblemas(); if (S.tab === 'perfil') renderPerfil(); if (S.tab === 'agendar') renderRecBox(); }, () => { if (!owner || S.user?.uid !== owner) return; S.perfil = null; if (S.tab === 'perfil') renderPerfil(); });
 }
 const perfilAtual = () => S.perfil || { nome: pn(me().nome), concluidos: 0, ganhas: 0, usadas: 0, estrelas: 0, emblemas: [] };
 const pn = n => String(n || '').trim().split(/\s+/)[0];
@@ -741,37 +749,39 @@ function renderRecBox(){
 /* ================= CHAT ================= */
 let unsubMsgs = null, unsubConv = null;
 function abrirChatSeTiver(){
-  const id = lsGet('conversaId'); const m = me();
+  const id = lsGet(accountKey('conversaId')); const m = me();
   if (id && m.nome){ $('#chatIdent').hidden = true; $('#chatBox').hidden = false; ligarChat(id); }
   else { const f = $('#chatIdent'); f.hidden = false; $('#chatBox').hidden = true; f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; }
 }
 function ligarChat(id){
   if (unsubMsgs) { renderMsgs(); marcarLida(); return; }
-  unsubMsgs = store.watch(`conversas/${id}/msgs`, ms => { S.msgs = ms.sort((a, b) => (a.em || 0) - (b.em || 0)); renderMsgs(); marcarLida(); });
+  const owner = S.user?.uid;
+  unsubMsgs = store.watch(`conversas/${id}/msgs`, ms => { if (!owner || S.user?.uid !== owner) return; S.msgs = ms.sort((a, b) => (a.em || 0) - (b.em || 0)); renderMsgs(); marcarLida(); });
 }
-function marcarLida(){ const id = lsGet('conversaId'); if (S.tab === 'chat' && id && S.conv?.naoLidaCliente) store.set('conversas', id, { naoLidaCliente: false }); }
+function marcarLida(){ const id = lsGet(accountKey('conversaId')); if (S.tab === 'chat' && id && S.conv?.naoLidaCliente) store.set('conversas', id, { naoLidaCliente: false }); }
 function renderMsgs(){
   const box = $('#msgs');
   box.innerHTML = `<div class="msg">Oi! Pode mandar sua dúvida por aqui que eu respondo assim que puder 💬</div>` + S.msgs.map(m => `<div class="msg ${m.de === 'cliente' ? 'me' : ''}">${esc(m.texto)}<time>${hora(m.em)}</time></div>`).join('');
   if (S.tab === 'chat') scrollTo(0, document.body.scrollHeight);
 }
 function vigiarConversa(){
-  const id = lsGet('conversaId'); if (!id || unsubConv) return;
-  unsubConv = store.watchDoc('conversas', id, c => { S.conv = c; $('#chatDot').hidden = !(c && c.naoLidaCliente && S.tab !== 'chat'); marcarLida(); });
+  const id = lsGet(accountKey('conversaId')); if (!id || unsubConv) return;
+  const owner = S.user?.uid;
+  unsubConv = store.watchDoc('conversas', id, c => { if (!owner || S.user?.uid !== owner) return; S.conv = c; $('#chatDot').hidden = !(c && c.naoLidaCliente && S.tab !== 'chat'); marcarLida(); });
 }
 $('#chatIdent').addEventListener('submit', e => {
   e.preventDefault(); const f = e.target;
   if (digits(f.telefone.value).length < 10){ toast('Confira seu WhatsApp com DDD'); return; }
   salvarMe(f.nome.value.trim(), f.telefone.value.trim());
-  if (!lsGet('conversaId')) lsSet('conversaId', uid());
+  if (!lsGet(accountKey('conversaId'))) lsSet(accountKey('conversaId'), uid());
   vigiarConversa(); abrirChatSeTiver();
 });
 $('#chatForm').addEventListener('submit', async e => {
   e.preventDefault(); const inp = e.target.t; const t = inp.value.trim(); if (!t) return;
-  const id = lsGet('conversaId'); const m = me(); inp.value = '';
+  const id = lsGet(accountKey('conversaId')); const m = me(); inp.value = '';
   try {
     await store.add(`conversas/${id}/msgs`, { de: 'cliente', texto: t, em: Date.now() });
-    await store.set('conversas', id, { nome: m.nome || 'Cliente', telefone: m.telefone || '', ultimaMsg: t, ultimaDe: 'cliente', atualizadoEm: Date.now(), naoLidaAdmin: true });
+    await store.set('conversas', id, { clienteUid: S.user.uid, nome: m.nome || 'Cliente', telefone: m.telefone || '', ultimaMsg: t, ultimaDe: 'cliente', atualizadoEm: Date.now(), naoLidaAdmin: true });
   } catch (err) { console.error(err); toast('Mensagem não enviada. Tente de novo.'); inp.value = t; }
 });
 
@@ -787,11 +797,14 @@ const ACTS = {
   emblema: d => { const e = R.emblemas(S.cfg).find(x => x.id === d.id); if (!e) return; const on = (perfilAtual().emblemas || []).includes(d.id); toast(`${e.ic} ${e.nome} — ${on ? 'conquistado!' : e.como}`); },
   usarRec: d => { S.recSel = d.v; go('agendar'); toast('Escolha o serviço e o horário — o mimo já fica selecionado 🎁'); },
   sairConta: async () => { if (!confirm('Sair da sua conta neste aparelho?')) return; await conta.sair(); },
-  trocarPerfil: () => { lsSet('cliente', {}); S.perfilKey = null; S.perfil = undefined; unsubPerfil && unsubPerfil(); unsubPerfil = null; renderPerfil(); },
+  trocarPerfil: () => { lsSet(accountKey('cliente'), {}); S.perfilKey = null; S.perfil = undefined; unsubPerfil && unsubPerfil(); unsubPerfil = null; renderPerfil(); },
   copiarPix: () => { const c = S.pixAtual || ''; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => toast('Código Pix copiado ✓ Cole no app do banco')).catch(() => { const r = document.createRange(); r.selectNodeContents($('#pixCode')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Toque e segure para copiar'); }); }
 };
 document.addEventListener('change', e => { const t = e.target.closest('[data-add]'); if (!t) return; const id = t.dataset.add; S.adds = (S.adds || []).filter(x => x !== id); if (t.checked) S.adds.push(id); renderPassos(); });
-document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault(); fn(t.dataset, t); });
+document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t) return; const fn = ACTS[t.dataset.act]; if (!fn) return; e.preventDefault();
+  if (t.dataset.busy === '1') return;
+  t.dataset.busy = '1';
+  Promise.resolve().then(() => fn(t.dataset, t)).catch(err => { console.error(err); toast(err.message || 'Não consegui salvar. Tente novamente.'); }).finally(() => { delete t.dataset.busy; }); });
 
 /* ================= CONTA DA CLIENTE (e-mail e senha) ================= */
 const ERROS = { 'auth/invalid-credential': 'E-mail ou senha incorretos.', 'auth/wrong-password': 'E-mail ou senha incorretos.', 'auth/user-not-found': 'Não achei conta com esse e-mail. Toque em "Criar conta".', 'auth/email-already-in-use': 'Esse e-mail já tem conta. Toque em "Entrar".', 'auth/invalid-email': 'Confira o e-mail.', 'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.', 'auth/too-many-requests': 'Muitas tentativas. Espere um pouco e tente de novo.', 'auth/network-request-failed': 'Sem internet. Tente de novo.' };
@@ -816,23 +829,44 @@ const conta = {
   },
   async sair(){
     if (DEMO) lsSet('demo:sessao', null); else await fb.au.signOut(fb.auth);
-    S.user = null; lsSet('cliente', {}); document.body.classList.add('sem-login'); unsubContaAgs && unsubContaAgs();
+    limparSessao();
   },
   async ligar(u){
+    if (S.user?.uid === u.uid) return;
+    const novo = S.novoCadastro; limparSessao();
+    const version = sessionVersion;
     let p = null; try { p = await store.get('clientes', u.uid); } catch (e) { console.error(e); }
-    p = p || S.novoCadastro || {};
+    if (version !== sessionVersion) return;
+    p = p || novo || {};
     S.user = { uid: u.uid, email: u.email, nome: p.nome || u.displayName || '', telefone: p.telefone || '' };
-    if (S.user.nome || S.user.telefone) lsSet('cliente', { nome: S.user.nome, telefone: S.user.telefone });
+    if (S.user.nome || S.user.telefone) lsSet(accountKey('cliente'), { nome: S.user.nome, telefone: S.user.telefone });
     document.body.classList.remove('sem-login');
-    ligarPerfil(); vigiarAgsDaConta();
+    ligarPerfil(); vigiarAgsDaConta(); watchMeus(); vigiarConversa();
     if (S.tab === 'perfil') renderPerfil();
   }
 };
 let unsubContaAgs = null;
+let sessionVersion = 0;
+function limparSessao(){
+  sessionVersion++;
+  unsubContaAgs?.(); unsubContaAgs = null;
+  Object.values(unsubMeus).forEach(un => un());
+  Object.keys(unsubMeus).forEach(k => delete unsubMeus[k]);
+  unsubMsgs?.(); unsubMsgs = null; unsubConv?.(); unsubConv = null;
+  unsubPerfil?.(); unsubPerfil = null;
+  S.user = null; S.meus = {}; S.msgs = []; S.conv = null;
+  S.perfil = undefined; S.perfilKey = null; S.novoCadastro = null;
+  S.serv = null; S.dia = null; S.hora = null; S.adds = []; S.recSel = '';
+  $('#dados').reset(); $('#chatIdent').reset(); $('#chatForm').reset();
+  $('#v-meus').replaceChildren(); $('#v-perfil').replaceChildren(); $('#msgs').replaceChildren();
+  closeSheet(); document.body.classList.add('sem-login'); go('agendar'); renderPassos();
+}
+
 function vigiarAgsDaConta(){
   unsubContaAgs && unsubContaAgs();
   if (!S.user) return;
-  unsubContaAgs = store.watchWhere('agendamentos', 'clienteUid', S.user.uid, lista => { lista.forEach(a => { S.meus[a.id] = a; }); if (S.tab === 'meus') renderMeus(); });
+  const owner = S.user.uid;
+  unsubContaAgs = store.watchWhere('agendamentos', 'clienteUid', owner, lista => { if (S.user?.uid !== owner) return; S.meus = Object.fromEntries(lista.filter(a => a.clienteUid === owner).map(a => [a.id, a])); if (S.tab === 'meus') renderMeus(); });
 }
 function telaAcesso(){
   let modo = 'entrar'; const f = $('#acForm');
@@ -892,7 +926,7 @@ if (DEMO || fb){
   watchMeus(); vigiarConversa(); ligarPerfil();
   telaAcesso();
   if (DEMO){ const e = lsGet('demo:sessao'); const c = e && (lsGet('demo:contas') || {})[e]; if (c) conta.ligar({ uid: c.uid, email: e }); }
-  else fb.au.onAuthStateChanged(fb.auth, u => { if (u){ if (!S.user || S.user.uid !== u.uid) conta.ligar(u); } else { S.user = null; document.body.classList.add('sem-login'); } });
+  else fb.au.onAuthStateChanged(fb.auth, u => { if (u){ if (!S.user || S.user.uid !== u.uid) conta.ligar(u); } else { limparSessao(); } });
 }
 </script>
 </body>
