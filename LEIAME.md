@@ -109,3 +109,15 @@ Ficará assim:
 ## Clube de recompensas editável
 - Ajustes › Recompensas: estrelas por atendimento, bônus de Natal, prêmios, **níveis** (`atendimentos | ícone | nome`) e **emblemas** (ligar/desligar, trocar ícone e nome). Grave com "Salvar ajustes".
 - Ajustes › Estrelinhas das clientes: busca pela cliente e botões − / + para tirar ou dar estrelinhas. Salva na hora.
+
+## Correções e testes
+
+Consulte [docs/CORRECOES.md](docs/CORRECOES.md) para as correções da primeira etapa, testes automatizados e o plano de migração do Firebase. As mudanças de segurança e reserva concorrente precisam ser implantadas com migração; não substitua as regras de produção isoladamente.
+
+## Segurança e migração (Spark)
+
+Antes de publicar esta branch, siga [docs/MIGRACAO-FIREBASE.md](docs/MIGRACAO-FIREBASE.md). As páginas dependem das regras Spark, do catálogo de disponibilidade e do mapa de titularidade aplicado. Não publique apenas o HTML.
+
+## Plano gratuito Spark
+
+A versão atual usa somente autenticação, regras e transações Firestore, sem Cloud Functions ou Blaze. Consulte [docs/MIGRACAO-FIREBASE.md](docs/MIGRACAO-FIREBASE.md) para migrar antes de publicar. O Spark possui cotas gratuitas; acompanhe o uso no console.

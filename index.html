@@ -14,6 +14,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Great+Vibes&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script src="spark-store.js"></script>
+<script src="validacao.js"></script>
 <script src="natal.js"></script>
 <script src="recompensas.js"></script>
 <script src="qrcode.js"></script>
@@ -206,8 +208,9 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--rose
 .qr svg{display:block;width:100%;height:auto}
 .pixcode{font:600 11px ui-monospace,monospace;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px;word-break:break-all}
 </style>
+<link rel="stylesheet" href="responsive.css">
 </head>
-<body>
+<body class="painel">
 
 <header class="top">
   <div class="top-in">
@@ -277,21 +280,48 @@ async function initStore(){
   const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
   const [a, f, au] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), import(base + 'firebase-auth.js')]);
   const app = a.initializeApp(CFG.firebase);
-  fb = { f, au, db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }), auth: au.getAuth(app) };
+  const db = f.initializeFirestore(app, { ignoreUndefinedProperties: true });
+  const spark = window.SPARK_STORE.adapter(f, db);
+  fb = { f, au, db, auth: au.getAuth(app), spark };
 }
 const store = {
   async set(path, id, data){
     if (DEMO){ const c = demoCol(path); c[id] = { ...(c[id] || {}), ...data }; demoSave(path, c); return id; }
+    if (path === 'ocupados') return id; // Managed atomically with the booking.
+    if (path === 'config' && id === 'geral') { await fb.spark.config(data); return id; }
+    if (path === 'agendamentos') { await fb.spark.booking(id, data, { admin: true }); return id; }
     await fb.f.setDoc(fb.f.doc(fb.db, path, id), data, { merge: true }); return id;
   },
   add(path, data){ return store.set(path, uid(), data); },
+  async registrarPagamento(id, tipo, venda, patch){
+    const vendaId = tipo + ':' + id;
+    const valida = ag => {
+      if (!ag) throw new Error('Agendamento não encontrado.');
+      if (tipo === 'entrada' && ag.entrada?.status === 'recebida') return false;
+      if (tipo === 'servico' && ag.status === 'concluido') return false;
+      if (!['pendente', 'confirmado'].includes(ag.status)) throw new Error('Este agendamento não permite receber pagamento.');
+      if (!Number.isFinite(venda.valor) || venda.valor < 0) throw new Error('Informe um valor válido, igual ou maior que zero.');
+      return true;
+    };
+    if (DEMO){
+      const ags = demoCol('agendamentos'), vendas = demoCol('vendas');
+      if (!valida(ags[id])) return ags[id];
+      vendas[vendaId] = venda; ags[id] = { ...ags[id], ...patch };
+      // No await between validation and local writes.
+      lsSet('demo:vendas', vendas); lsSet('demo:agendamentos', ags); bus.dispatchEvent(new Event('ch'));
+      return ags[id];
+    }
+    return fb.spark.booking(id, patch, { admin: true, payment: { tipo, venda } });
+  },
   async remove(path, id){
     if (DEMO){ const c = demoCol(path); delete c[id]; demoSave(path, c); return; }
+    if (path === 'ocupados') return;
+    if (path === 'agendamentos') { await fb.spark.booking(id, {}, { admin: true, remove: true }); return; }
     await fb.f.deleteDoc(fb.f.doc(fb.db, path, id));
   },
   watch(path, cb, onErr){
     if (DEMO) return onBus(() => cb(Object.entries(demoCol(path)).map(([id, d]) => ({ id, ...d }))));
-    return fb.f.onSnapshot(fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => { console.error(path, e); onErr && onErr(e); });
+    return fb.f.onSnapshot(path === 'ocupados' ? fb.f.query(fb.f.collection(fb.db,path),fb.f.where('data','>=',ymd(new Date()))) : fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => { console.error(path, e); onErr && onErr(e); });
   },
   watchDoc(path, id, cb){
     if (DEMO) return onBus(() => { const d = demoCol(path)[id]; cb(d ? { id, ...d } : null); });
@@ -356,10 +386,11 @@ function travasDoDia(cfg, dataStr){
 }
 /** Horários livres de um dia para um serviço de `dur` minutos */
 function slotsDoDia(cfg, ocupados, dataStr, dur, antecH){
-  if (!cfg || !dataStr) return [];
+  if (!cfg || !dataStr || !Number.isFinite(dur) || dur <= 0 || dur > 1440) return [];
   const d = parseYmd(dataStr); const h = expediente(cfg, dataStr);
   if (!h) return [];
   const ini = toMin(h.ini), fim = toMin(h.fim), step = Number(cfg.intervalo) || 30;
+  if (!Number.isFinite(step) || step <= 0) return [];
   const porServico = cfg.passoServico !== false;
   const pI = h.pIni && h.pFim ? toMin(h.pIni) : null, pF = h.pIni && h.pFim ? toMin(h.pFim) : null;
   const occ = ocupados.filter(o => o.data === dataStr).map(o => [toMin(o.ini), toMin(o.fim)]);
@@ -648,7 +679,7 @@ function formAgendamento(pre = {}){
       if (vEnt > 0){
         const forma = (f.querySelector('[name=forma]:checked') || {}).value || 'pix';
         data.entrada = { valor: vEnt, percentual: preco ? Math.round(vEnt / preco * 100) : 0, forma, status: 'recebida', recebidaEm: Date.now(), manual: true };
-        await store.add('vendas', { data: ymd(new Date()), descricao: data.servicoNome, tipo: 'entrada', cliente: data.nome, valor: vEnt, forma, agendamentoId: id, criadoEm: Date.now() });
+        if (DEMO) await store.add('vendas', { data: ymd(new Date()), descricao: data.servicoNome, tipo: 'entrada', cliente: data.nome, valor: vEnt, forma, agendamentoId: id, criadoEm: Date.now() });
       }
       await store.set('agendamentos', id, data);
       await store.set('ocupados', id, { data: data.data, ini, fim });
@@ -675,20 +706,22 @@ function formConcluir(a){
     <div class="row mt"><button type="button" class="btn" data-act="fechar">Voltar</button><button class="btn p grow">Registrar pagamento</button></div></form>`, sh => {
     const f = sh.querySelector('form');
     f.onsubmit = async e => {
-      e.preventDefault(); const valor = num(f.valor.value); const forma = f.forma.value;
-      await store.add('vendas', { data: a.data, descricao: a.servicoNome, tipo: 'servico', cliente: a.nome, valor, forma, agendamentoId: a.id, criadoEm: Date.now() });
+      e.preventDefault(); if (f.dataset.busy) return; f.dataset.busy = '1';
+      const submit = f.querySelector('button[type=submit], button.btn.p'); submit.disabled = true;
+      try { const valor = num(f.valor.value); const forma = f.forma.value;
+      if (!Number.isFinite(valor) || valor < 0) { toast('Informe um valor válido.'); return; }
       const upd = { status: 'concluido', valorPago: N.r2(valor + ent), forma };
       if (rec) upd.recompensa = { ...rec, aplicada: !!f.rec.checked };
-      await store.set('agendamentos', a.id, upd);
+      await store.registrarPagamento(a.id, 'servico', { data: a.data, descricao: a.servicoNome, tipo: 'servico', cliente: a.nome, valor, forma, agendamentoId: a.id, criadoEm: Date.now() }, upd);
       closeSheet(); toast('Atendimento finalizado · ' + brl(valor + ent) + (recOn() ? ` · +${R.cfgDe(C()).porAtendimento}⭐ para ${pn(a.nome)}` : ''));
+      } catch (err) { console.error(err); toast(err.message || 'Não consegui registrar o pagamento. Tente novamente.'); }
+      finally { delete f.dataset.busy; submit.disabled = false; }
     };
   });
 }
 async function receberEntrada(a){
-  await store.add('vendas', { data: ymd(new Date()), descricao: a.servicoNome, tipo: 'entrada', cliente: a.nome, valor: Number(a.entrada.valor) || 0, forma: a.entrada.forma === 'cartao' ? 'credito' : 'pix', agendamentoId: a.id, criadoEm: Date.now() });
   const entrada = { ...a.entrada, status: 'recebida', recebidaEm: Date.now() };
-  await store.set('agendamentos', a.id, { entrada });
-  return { ...a, entrada };
+  return { ...a, ...await store.registrarPagamento(a.id, 'entrada', { data: ymd(new Date()), descricao: a.servicoNome, tipo: 'entrada', cliente: a.nome, valor: Number(a.entrada.valor), forma: a.entrada.forma === 'cartao' ? 'credito' : 'pix', agendamentoId: a.id, criadoEm: Date.now() }, { entrada }) };
 }
 async function confirmarAg(a){
   await store.set('agendamentos', a.id, { status: 'confirmado', confirmadoEm: Date.now() });
@@ -945,7 +978,7 @@ function lerAdicionais(txt, antigos){
   return String(txt || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
     const [nome, preco, min] = l.split('|').map(x => (x || '').trim());
     const velho = (antigos || []).find(a => a.nome.toLowerCase() === String(nome).toLowerCase());
-    return { id: velho?.id || uid(), nome, preco: num(preco || '0'), duracao: Math.max(0, parseInt(min, 10) || 0) };
+    return { id: velho?.id || uid(), nome, preco: num(preco || '0'), duracao: Number(min || 0) };
   }).filter(a => a.nome);
 }
 function lerAjustes(){
@@ -1072,6 +1105,7 @@ const ACTS = {
   salvarAjustes: async () => {
     lerAjustes(); const c = S.draft; c.servicos = c.servicos.filter(s => s.nome);
     if (!c.servicos.length) { toast('Cadastre pelo menos um serviço'); return; }
+    const erro = window.validarConfiguracao(c); if (erro) { toast(erro); return; }
     const vivo = C(); c.bloqueios = vivo.bloqueios || []; c.travas = vivo.travas || []; c.extras = vivo.extras || [];
     await store.set('config', 'geral', c); toast('Ajustes salvos ✓'); renderAjustes();
   },
@@ -1095,7 +1129,10 @@ const ACTS = {
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]'); if (!t) return;
   const fn = ACTS[t.dataset.act]; if (!fn) return;
-  e.preventDefault(); fn(t.dataset, t);
+  e.preventDefault();
+  if (t.dataset.busy === '1') return;
+  t.dataset.busy = '1';
+  Promise.resolve().then(() => fn(t.dataset, t)).catch(err => { console.error(err); toast(err.message || 'Não consegui salvar. Tente novamente.'); }).finally(() => { delete t.dataset.busy; });
 });
 
 /* ================= PERFIS DE RECOMPENSA ================= */
@@ -1106,6 +1143,13 @@ async function syncPerfis(){
   const grupos = {};
   S.ags.forEach(a => { const k = R.chave(a.telefone); if (k) (grupos[k] = grupos[k] || []).push(a); });
   const atual = Object.fromEntries(S.perfis.map(p => [p.id, p]));
+  const porUid = {};
+  S.ags.forEach(a => { if (a.clienteUid) (porUid[a.clienteUid] ||= []).push(a); });
+  for (const [uid, ags] of Object.entries(porUid)) {
+    const perfil = R.calcular(ags, S.cfg, R.chave(ags[0]?.telefone));
+    const id = 'u_' + uid; const antes = atual[id];
+    if (!antes || ['nome','concluidos','ganhas','usadas','estrelas','ultimaVisita'].some(k => antes[k] !== perfil[k]) || JSON.stringify(antes.emblemas) !== JSON.stringify(perfil.emblemas)) await store.set('perfis', id, perfil);
+  }
   for (const [k, ags] of Object.entries(grupos)){
     const p = R.calcular(ags, S.cfg, k); const o = atual[k] || {};
     const igual = ['nome', 'concluidos', 'ganhas', 'usadas', 'estrelas', 'ultimaVisita'].every(x => o[x] === p[x]) && JSON.stringify(o.emblemas || []) === JSON.stringify(p.emblemas);
@@ -1118,10 +1162,15 @@ async function syncPerfis(){
 
 /* ================= INÍCIO ================= */
 function start(){
+  if (!DEMO) store.watchDoc('configAdmin', 'recompensas', c => {
+    S.ajustesPrivados = c?.ajustes || {};
+    if (S.cfg) { S.cfg.recompensas = { ...S.cfg.recompensas, ajustes: S.ajustesPrivados }; agendarSync(); if (S.view === 'ajustes') renderAjustes(); }
+  });
+  if (!DEMO) fb.spark.config({}).catch(err => { console.error(err); toast('Não consegui atualizar os dias da agenda. Confira os ajustes.'); });
   store.watch('perfis', x => { S.perfis = x; agendarSync(); }, () => { S.perfisErr = true; });
   store.watchDoc('config', 'geral', c => {
     if (!c){ store.set('config', 'geral', DEFAULT_CONFIG); return; }
-    S.cfg = c; agendarSync(); $('#nomeNegocio').textContent = c.nome || 'Minha agenda';
+    S.cfg = c; if (!DEMO) S.cfg.recompensas = { ...c.recompensas, ajustes: S.ajustesPrivados || {} }; agendarSync(); $('#nomeNegocio').textContent = c.nome || 'Minha agenda';
     const on = !!N.natal(c).ativo; document.documentElement.toggleAttribute('data-natal', on);
     try { localStorage.setItem('natalOff', on ? '0' : '1'); } catch (e) {}
     document.querySelector('meta[name=theme-color]').content = on ? '#8e1620' : '#c4507a';
