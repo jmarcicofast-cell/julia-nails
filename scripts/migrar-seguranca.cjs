@@ -4,7 +4,8 @@ const path=require('node:path');
 const {initializeApp}=require('firebase-admin/app');
 const {getFirestore}=require('firebase-admin/firestore');
 const {getAuth}=require('firebase-admin/auth');
-const COLLECTIONS=['config','agendamentos','ocupados','clientes','perfis','encaixes','conversas','vendas','despesas','clienteAcessos','agendaDias','controle'];
+const {compile,ordered}=require('../spark-store.js');
+const COLLECTIONS=['config','configAdmin','agendamentos','ocupados','clientes','perfis','encaixes','conversas','vendas','despesas','clienteAcessos','agendaDias','controle'];
 const validId=s=>typeof s==='string'&&s.length>0&&!s.includes('/')&&!['__proto__','prototype','constructor'].includes(s);
 function plan(snapshot,mappings,adminUid){
  if(!validId(adminUid))throw Error('UID administrativo inválido.');
@@ -39,8 +40,14 @@ function plan(snapshot,mappings,adminUid){
  for(const [id,a]of Object.entries(snapshot.agendamentos||{}))if(['pendente','confirmado'].includes(a.status)){
   add(id,a);writes.push({path:'ocupados/'+id,data:{data:a.data,ini:a.ini,fim:a.fim},merge:false});
  }
- for(const [day,reservas]of Object.entries(locks))writes.push({path:'agendaDias/'+day,data:{reservas},merge:false});
- return {writes,unassigned:{conversas:Object.keys(snapshot.conversas||{}).filter(id=>!claimed.has('conversas/'+id)&&!snapshot.conversas[id].clienteUid),agendamentos:Object.keys(snapshot.agendamentos||{}).filter(id=>!claimed.has('agendamentos/'+id)&&!snapshot.agendamentos[id].clienteUid)},control:{schemaVersion:2,adminUid}};
+ for(const [day,reservas]of Object.entries(locks))writes.push({path:'agendaDias/'+day,data:{blocos:ordered(Object.entries(reservas).map(([id,a])=>({id,...a}))),ultimoId:'migracao',pos:-1},merge:false});
+ if(snapshot.config?.geral){
+  const cfg={...snapshot.config.geral},rec={...(cfg.recompensas||{})};
+  const ajustes={...(rec.ajustes||{}),...(snapshot.configAdmin?.recompensas?.ajustes||{})};
+  delete rec.ajustes;if(cfg.recompensas)cfg.recompensas=rec;
+  writes.push({path:'config/geral',data:cfg,merge:false},{path:'configAdmin/recompensas',data:{ajustes},merge:false},{path:'config/reservas',data:compile(cfg),merge:false});
+ }
+ return {writes,unassigned:{conversas:Object.keys(snapshot.conversas||{}).filter(id=>!claimed.has('conversas/'+id)&&!snapshot.conversas[id].clienteUid),agendamentos:Object.keys(snapshot.agendamentos||{}).filter(id=>!claimed.has('agendamentos/'+id)&&!snapshot.agendamentos[id].clienteUid)},control:{schemaVersion:3,adminUid}};
 }
 async function run(){
  const args=process.argv.slice(2), get=k=>args[args.indexOf(k)+1];
@@ -64,9 +71,9 @@ async function run(){
  console.log(JSON.stringify({project,apply,documentos:p.writes.length,pendentes:p.unassigned,backup:dir},null,2));
  if(!apply)return;
  if((p.unassigned.conversas.length || p.unassigned.agendamentos.length) && !args.includes('--allow-unassigned'))throw Error('Há registros sem titular. Revise as pendências; só prossiga com --allow-unassigned se a administradora decidiu mantê-los restritos ao painel.');
- // Keep clients closed during cutover; publish restrictive rules and the new functions before applying.
+ // Keep clients closed during cutover; publish compatible restrictive rules before applying.
  const check=await db.doc('controle/seguranca').get();
- if(check.data()?.schemaVersion===2)throw Error('Migração já ativada. Gere um novo dry-run e revise; este script não reabre uma migração ativa.');
+ if(check.data()?.schemaVersion===3)throw Error('Migração já ativada. Gere um novo dry-run e revise; este script não reabre uma migração ativa.');
  // Recheck every source document before writes, avoiding silent overwrite of live data.
  // Maintenance window is mandatory: direct writes by old app versions must already be denied by rules.
  const unique=new Map(p.writes.map(w=>[w.path,w]));

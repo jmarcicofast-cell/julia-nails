@@ -1,6 +1,96 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function ready() { return get(/databases/$(database)/documents/controle/seguranca).data.schemaVersion == 3; }
+    function afterAg(id) { return getAfter(/databases/$(database)/documents/agendamentos/$(id)).data; }
+    function minutes(h) { return int(h.split(':')[0])*60 + int(h.split(':')[1]); }
+    function time(h) { return h is string && h.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'); }
+    function insertOnly(day) {
+      let d = request.resource.data;
+      let old = request.method == 'create' ? [] : resource.data.blocos;
+      let a = afterAg(d.ultimoId);
+      let n = d.pos;
+      return d.keys().hasOnly(['blocos','ultimoId','pos']) && own(a)
+        && !exists(/databases/$(database)/documents/agendamentos/$(d.ultimoId))
+        && a.data == day && d.blocos is list && n is int && n >= 0 && n <= old.size()
+        && d.blocos.size() == old.size()+1
+        && (n == 0 ? true : d.blocos[0:n] == old[0:n])
+        && (n == old.size() ? true : d.blocos[n+1:d.blocos.size()] == old[n:old.size()])
+        && d.blocos[n] == {'id':d.ultimoId,'ini':a.ini,'fim':a.fim,'maxFim':a.fim}
+        && (n == 0 ? true : old[n-1].maxFim <= a.ini)
+        && (n == old.size() ? true : a.fim <= old[n].ini);
+    }
+    // Four lookup tables cover every combination of twenty addons without a loop
+    // or an exponential catalog. Each table has at most 32 entries, published by admin.
+    function validPrice(a,c,s) {
+      let t = get(/databases/$(database)/documents/config/reservas).data.servicos[a.servicoIndice];
+      let m = a.adicionaisMascaras;
+      let q0 = t.grupos[0].opcoes[m[0]];
+      let q1 = t.grupos[1].opcoes[m[1]];
+      let q2 = t.grupos[2].opcoes[m[2]];
+      let q3 = t.grupos[3].opcoes[m[3]];
+      let surcharge = c.get('natal',{}).get('ativo',true) ? c.get('natal',{}).get('adicional',10) : 0;
+      return m is list && m.size()==4 && t.id==s.id
+        && a.adicionaisIndices == q0.indices.concat(q1.indices).concat(q2.indices).concat(q3.indices)
+        && a.get('adicionais',[]) == q0.adicionais.concat(q1.adicionais).concat(q2.adicionais).concat(q3.adicionais)
+        && a.servicoNome == s.nome + q0.sufixo + q1.sufixo + q2.sufixo + q3.sufixo
+        && a.preco >= 0 && a.preco == math.round(a.preco*100) / 100.0
+        && a.precoBase == s.preco && a.adicionalNatal == surcharge
+        && a.duracao >= s.duracao && a.duracao > 0 && a.duracao < 1440
+        && minutes(a.fim)-minutes(a.ini) == a.duracao
+        && (int(math.round(a.preco*100))-int(math.round((s.preco+surcharge)*100)))*30000 + a.duracao-s.duracao == q0.valor+q1.valor+q2.valor+q3.valor;
+    }
+    function validDeposit(a,c,s) {
+      let e = c.get('entrada',{});
+      let card = e.get('cartaoAtivo',false) && ((a.adicionaisIndices.size()==0 && e.get('linksCartao',{}).get(s.id,'') != '') || e.get('linkCartao','') != '');
+      let pix = e.get('chavePix','') != '';
+      let needed = e.get('ativo',true) && (pix || card) && a.preco > 0;
+      let value = math.round(a.preco*e.get('percentual',50)) / 100.0;
+      return needed ? (a.entrada.keys().hasOnly(['valor','percentual','forma','status','informadaEm'])
+        && a.entrada.valor == value && a.entrada.percentual == e.get('percentual',50)
+        && a.entrada.status == 'informada' && a.entrada.informadaEm is number
+        && ((a.entrada.forma == 'pix' && pix) || (a.entrada.forma == 'cartao' && card)))
+        : !('entrada' in a);
+    }
+    function available(a,c) {
+      let windows = get(/databases/$(database)/documents/config/reservas).data.dias.get(a.data,[]);
+      let i = a.janelaIndice;
+      let parts = a.data.split('-');
+      let start = timestamp.date(int(parts[0]),int(parts[1]),int(parts[2])) + duration.value(minutes(a.ini)+180,'m');
+      return i is int && i >= 0 && i < windows.size()
+        && windows[i].ini <= a.ini && a.fim <= windows[i].fim
+        && start >= request.time + duration.value(c.get('antecedenciaHoras',0)*60,'m');
+    }
+    function profileBalance() {
+      let uid = request.auth.uid;
+      let mapping = exists(/databases/$(database)/documents/clienteAcessos/$(uid)) ? access() : {};
+      return get(/databases/$(database)/documents/perfis/$(mapping.get('perfilId','u_'+uid))).data.get('estrelas',0);
+    }
+    function validReward(a,c) {
+      let r = a.get('recompensa',null);
+      let defaults = [{'custo':30,'nome':'Hidratação de cutículas de presente'},{'custo':50,'nome':'2 unhas decoradas de presente'},{'custo':80,'nome':'Esfoliação nos pés de presente'},{'custo':100,'nome':'R$10 de desconto no serviço'},{'custo':150,'nome':'Decoração natalina completa de presente'}];
+      return r == null || (r is map && r.keys().hasOnly(['nome','custo']) && r.custo is number && r.custo > 0
+        && c.get('recompensas',{}).get('ativo',true)
+        && c.get('recompensas',{}).get('catalogo',defaults).hasAny([r]) && profileBalance() >= r.custo);
+    }
+    function validBooking(id) {
+      let a = request.resource.data;
+      let c = get(/databases/$(database)/documents/config/geral).data;
+      let index = a.servicoIndice;
+      let s = c.servicos[index];
+      let guard = getAfter(/databases/$(database)/documents/agendaDias/$(a.data)).data;
+      return own(a) && a.keys().hasOnly(['nome','telefone','servicoId','servicoNome','duracao','preco','precoBase','adicionalNatal','data','ini','fim','deco','obs','aceitouRegras','status','origem','criadoEm','adicionais','recompensa','clienteUid','email','entrada','servicoIndice','adicionaisIndices','adicionaisMascaras','janelaIndice'])
+        && a.status == 'pendente' && a.origem == 'link' && a.email == request.auth.token.email
+        && short(a.nome,150) && a.nome.size() > 0 && short(a.telefone,30)
+        && a.telefone.size() >= 10 && short(a.servicoNome,500) && short(a.obs,500) && short(a.deco,500)
+        && a.criadoEm is number && a.data.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && time(a.ini) && time(a.fim) && a.ini < a.fim && index is int && index >= 0 && index < c.servicos.size()
+        && a.servicoId == s.id && validPrice(a,c,s) && validDeposit(a,c,s) && available(a,c) && validReward(a,c)
+        && (c.get('natal',{}).get('ativo',true) == false || a.deco.size() >= 3)
+        && ((c.get('regras',[]).size()==0 && c.get('natal',{}).get('ativo',true)==false) || a.aceitouRegras==true)
+        && guard.ultimoId == id && guard.blocos[guard.pos].id == id
+        && getAfter(/databases/$(database)/documents/ocupados/$(id)).data == {'data':a.data,'ini':a.ini,'fim':a.fim};
+    }
     function signed() { return request.auth != null; }
     function admin() { return signed() && request.auth.token.email == 'juliamarcico@gmail.com' && get(/databases/$(database)/documents/controle/seguranca).data.adminUid == request.auth.uid; }
     function own(d) { return signed() && d.get('clienteUid', '') == request.auth.uid; }
@@ -9,12 +99,28 @@ service cloud.firestore {
       return signed() && (cid == 'u_' + request.auth.uid || (exists(/databases/$(database)/documents/clienteAcessos/$(request.auth.uid)) && cid in access().get('conversaIds', [])));
     }
     function short(s,n) { return s is string && s.size() <= n; }
+    match /configAdmin/{id} { allow read, write: if admin(); }
     match /config/{id} { allow read: if true; allow write: if admin(); }
     match /controle/{id} { allow read, write: if false; }
-    match /agendaDias/{id} { allow read, write: if false; }
+    // Public schedule metadata only: IDs and intervals, never names/UIDs.
+    match /agendaDias/{day} {
+      allow read: if signed();
+      allow create, update: if ready() && (admin() || insertOnly(day));
+      allow delete: if ready() && admin();
+    }
     match /clienteAcessos/{uid} { allow read: if admin() || (signed() && request.auth.uid == uid); allow write: if admin(); }
-    match /ocupados/{id} { allow read: if true; allow write: if false; }
-    match /agendamentos/{id} { allow read: if admin() || own(resource.data); allow write: if false; }
+    match /ocupados/{id} {
+      allow read: if true;
+      allow create, update: if ready() && (admin() || (own(afterAg(id)) && !exists(/databases/$(database)/documents/agendamentos/$(id))
+        && request.resource.data == {'data':afterAg(id).data,'ini':afterAg(id).ini,'fim':afterAg(id).fim}));
+      allow delete: if ready() && admin();
+    }
+    match /agendamentos/{id} {
+      allow get: if admin() || (signed() && (!exists(/databases/$(database)/documents/agendamentos/$(id)) || own(resource.data)));
+      allow list: if admin() || own(resource.data);
+      allow create: if ready() && (admin() || validBooking(id));
+      allow update, delete: if ready() && admin();
+    }
     match /clientes/{uid} {
       allow read: if admin() || (signed() && request.auth.uid == uid);
       allow create, update: if signed() && request.auth.uid == uid

@@ -24,12 +24,27 @@ for(const file of ['index.html','agendar.html'])test(file+': disponibilidade res
  assert.equal(ctx.slotsDoDia(cfg,[],'2099-01-06',-1,0).length,0);
  assert.equal(ctx.slotsDoDia(cfg,[],'2099-01-06',0,0).length,0);
 });
-test('painel encaminha pagamento ao servidor em vez de gravar venda e status separadamente',async()=>{
+test('painel usa o adaptador transacional Spark para pagamentos',async()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const source=html.slice(html.indexOf('const CFG ='),html.indexOf('/* ================= UTILITÁRIOS'));
  const calls=[];
- const context=vm.createContext({window:{APP_CONFIG:{firebase:{apiKey:'TEST'}}},EventTarget,Event,addEventListener:()=>{},mock:{call:async data=>{calls.push(data);return {data:{status:'concluido'}}}},Date,Math,Number});
+ const context=vm.createContext({window:{APP_CONFIG:{firebase:{apiKey:'TEST'}}},EventTarget,Event,addEventListener:()=>{},mock:{spark:{booking:async (...args)=>{calls.push(args);return {status:'concluido'}}}},Date,Math,Number});
  vm.runInContext(source+'\nfb=mock;globalThis.store=store;',context);
  const result=await context.store.registrarPagamento('a','servico',{valor:35},{status:'concluido'});
- assert.equal(result.status,'concluido');assert.equal(calls.length,1);assert.equal(calls[0].action,'pagamento');assert.equal(calls[0].id,'a');
+ assert.equal(result.status,'concluido');assert.equal(calls.length,1);assert.equal(calls[0][0],'a');assert.equal(calls[0][2].payment.tipo,'servico');assert.equal(calls[0][2].admin,true);
+});
+test('Spark mantém horário extra acima da folga e desconta bloqueio parcial',()=>{
+ const {compile}=require('../spark-store.js');
+ const cfg=good(),day='2030-11-20';cfg.bloqueios=[day];cfg.extras=[day+' 09:00-12:00'];cfg.travas=[day+' 10:00-11:00'];cfg.diasAFrente=30;
+ const policy=compile(cfg,Date.parse('2030-11-15T12:00:00Z'));
+ assert.deepEqual(policy.dias[day],[{ini:'09:00',fim:'10:00'},{ini:'11:00',fim:'12:00'}]);
+});
+test('migração Spark separa ajustes privados sem alterar o saldo ou documentos originais',()=>{
+ const {plan}=require('../scripts/migrar-seguranca.cjs');
+ const cfg=good();cfg.recompensas={ajustes:{'21900000000':15}};
+ const result=plan({config:{geral:cfg}},[],'admin');
+ assert.equal(result.control.schemaVersion,3);
+ assert(!result.writes.find(w=>w.path==='config/geral').data.recompensas.ajustes);
+ assert.equal(result.writes.find(w=>w.path==='configAdmin/recompensas').data.ajustes['21900000000'],15);
+ assert.equal(cfg.recompensas.ajustes['21900000000'],15);
 });

@@ -4,7 +4,7 @@
   "scripts": {
     "test": "node --test tests/core.test.cjs",
     "test:browser": "node tests/regressao.cjs",
-    "test:security": "firebase emulators:exec --only firestore --project demo-julia-nails \"node --test --test-concurrency=1 tests/security.test.cjs tests/agenda-server.test.cjs\""
+    "test:security": "firebase emulators:exec --only firestore --project demo-julia-nails \"node --test --test-concurrency=1 tests/security.test.cjs tests/spark.test.cjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",

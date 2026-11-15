@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Great+Vibes&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script src="spark-store.js"></script>
 <script src="natal.js"></script>
 <script src="recompensas.js"></script>
 <script src="qrcode.js"></script>
@@ -349,15 +350,16 @@ async function initStore(){
   const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
   const [a, f, au] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), import(base + 'firebase-auth.js')]);
   const app = a.initializeApp(CFG.firebase);
-  const fn = await import(base + 'firebase-functions.js');
-  const call = fn.httpsCallable(fn.getFunctions(app, 'southamerica-east1'), 'agendaSegura');
-  fb = { f, au, auth: au.getAuth(app), db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }), call };
+  const db = f.initializeFirestore(app, { ignoreUndefinedProperties: true });
+  const spark = window.SPARK_STORE.adapter(f, db);
+  fb = { f, au, auth: au.getAuth(app), db, spark };
 }
 const store = {
   async set(path, id, data){
     if (DEMO){ const c = demoCol(path); c[id] = { ...(c[id] || {}), ...data }; demoSave(path, c); return id; }
-    if (path === 'ocupados') return id; // Managed atomically by agendaSegura.
-    if (path === 'agendamentos') { await fb.call({ action: 'salvar', id, data }); return id; }
+    if (path === 'ocupados') return id; // Managed atomically with the booking.
+    if (path === 'config' && id === 'geral') { await fb.spark.config(data); return id; }
+    if (path === 'agendamentos') { await fb.spark.booking(id, data, { admin: false }); return id; }
     await fb.f.setDoc(fb.f.doc(fb.db, path, id), data, { merge: true }); return id;
   },
   add(path, data){ return store.set(path, uid(), data); },
@@ -371,7 +373,7 @@ const store = {
   },
   watch(path, cb){
     if (DEMO) return onBus(() => cb(Object.entries(demoCol(path)).map(([id, d]) => ({ id, ...d }))));
-    return fb.f.onSnapshot(fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => console.error(path, e));
+    return fb.f.onSnapshot(path === 'ocupados' ? fb.f.query(fb.f.collection(fb.db,path),fb.f.where('data','>=',ymd(new Date()))) : fb.f.collection(fb.db, path), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => console.error(path, e));
   },
   watchDoc(path, id, cb, onErr){
     if (DEMO) return onBus(() => { const d = demoCol(path)[id]; cb(d ? { id, ...d } : null); });

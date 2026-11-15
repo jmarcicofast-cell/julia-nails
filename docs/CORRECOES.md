@@ -1,3 +1,5 @@
+> Versão atual: adaptada ao plano gratuito Spark. A proposta anterior com Functions foi retirada. Siga [MIGRACAO-FIREBASE.md](MIGRACAO-FIREBASE.md) para o procedimento atual; abaixo está o registro histórico da primeira etapa.
+
 > Atualização: a etapa 2 foi implementada para revisão e testes locais. Consulte [MIGRACAO-FIREBASE.md](MIGRACAO-FIREBASE.md) para regras, função de reserva e migração. A descrição abaixo registra o escopo da etapa 1; as pendências de código de segurança foram tratadas na etapa 2, mas a implantação e migração reais continuam pendentes.
 
 # Correções — etapa 1
