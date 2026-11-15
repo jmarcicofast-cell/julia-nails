@@ -2,3 +2,7 @@ node_modules/
 test-results/
 playwright-report/
 .env
+backups/
+mapeamento-real.json
+*-debug.log
+.firebase/

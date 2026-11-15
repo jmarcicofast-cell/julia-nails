@@ -315,6 +315,7 @@ body:not(.sem-login) #acesso{display:none}
       <div><label class="f">Seu WhatsApp com DDD</label><input name="telefone" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" required></div>
       <button class="btn p block">Começar conversa</button>
     </form>
+    <div id="chatHistorico"></div>
     <div id="chatBox" hidden>
       <div id="msgs" class="msgs"></div>
       <form id="chatForm" class="chatbar" autocomplete="off"><input name="t" placeholder="Escreva sua mensagem"><button class="btn p">Enviar</button></form>
@@ -348,11 +349,15 @@ async function initStore(){
   const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
   const [a, f, au] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), import(base + 'firebase-auth.js')]);
   const app = a.initializeApp(CFG.firebase);
-  fb = { f, au, auth: au.getAuth(app), db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }) };
+  const fn = await import(base + 'firebase-functions.js');
+  const call = fn.httpsCallable(fn.getFunctions(app, 'southamerica-east1'), 'agendaSegura');
+  fb = { f, au, auth: au.getAuth(app), db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }), call };
 }
 const store = {
   async set(path, id, data){
     if (DEMO){ const c = demoCol(path); c[id] = { ...(c[id] || {}), ...data }; demoSave(path, c); return id; }
+    if (path === 'ocupados') return id; // Managed atomically by agendaSegura.
+    if (path === 'agendamentos') { await fb.call({ action: 'salvar', id, data }); return id; }
     await fb.f.setDoc(fb.f.doc(fb.db, path, id), data, { merge: true }); return id;
   },
   add(path, data){ return store.set(path, uid(), data); },
@@ -650,7 +655,7 @@ function formEncaixe(){
       if (digits(f.telefone.value).length < 10){ toast('Confira seu WhatsApp com DDD'); return; }
       const s = sv.find(x => x.id === f.servico.value) || {};
       try {
-        await store.add('encaixes', { nome: f.nome.value.trim(), telefone: f.telefone.value.trim(), servicoId: s.id || '', servicoNome: s.nome || '', dias: [...f.querySelectorAll('[name=dias]:checked')].map(x => x.value), periodo: f.periodo.value, obs: f.obs.value.trim(), status: 'aguardando', origem: 'link', criadoEm: Date.now() });
+        await store.add('encaixes', { clienteUid: S.user.uid, nome: f.nome.value.trim(), telefone: f.telefone.value.trim(), servicoId: s.id || '', servicoNome: s.nome || '', dias: [...f.querySelectorAll('[name=dias]:checked')].map(x => x.value), periodo: f.periodo.value, obs: f.obs.value.trim(), status: 'aguardando', origem: 'link', criadoEm: Date.now() });
       } catch (err) { console.error(err); toast('Não consegui enviar. Tente de novo.'); return; }
       salvarMe(f.nome.value.trim(), f.telefone.value.trim());
       sheet(`<div class="stack center"><div class="ok">💕</div><h2>Você está na lista!</h2><p class="muted">Se abrir uma vaga, eu te chamo no WhatsApp.</p><button class="btn p block" data-act="fechar">Ok</button></div>`);
@@ -679,7 +684,7 @@ function renderMeus(){
 /* ================= PERFIL E RECOMPENSAS ================= */
 let unsubPerfil = null;
 function ligarPerfil(){
-  const k = R.chave(me().telefone);
+  const k = DEMO ? R.chave(me().telefone) : S.user && (S.acessos?.perfilId || 'u_' + S.user.uid);
   if (!k || k === S.perfilKey) return;
   S.perfilKey = k; S.perfil = undefined; unsubPerfil && unsubPerfil();
   const owner = S.user?.uid;
@@ -749,6 +754,11 @@ function renderRecBox(){
 /* ================= CHAT ================= */
 let unsubMsgs = null, unsubConv = null;
 function abrirChatSeTiver(){
+  const ids = S.acessos?.conversaIds || [];
+  const hist = $('#chatHistorico');
+  hist.innerHTML = ids.length ? `<label class="f" for="historicoChat">Conversa</label><select id="historicoChat">${[...new Set([...ids, 'u_' + S.user.uid])].map((id,i) => `<option value="${esc(id)}" ${id === lsGet(accountKey('conversaId')) ? 'selected' : ''}>${id.startsWith('u_') ? 'Conversa atual' : 'Histórico ' + (i+1)}</option>`).join('')}</select>` : '';
+  if (hist.firstElementChild) $('#historicoChat').onchange = e => { unsubMsgs?.(); unsubMsgs=null; unsubConv?.(); unsubConv=null; S.msgs=[]; S.conv=null; lsSet(accountKey('conversaId'),e.target.value); vigiarConversa(); abrirChatSeTiver(); };
+
   const id = lsGet(accountKey('conversaId')); const m = me();
   if (id && m.nome){ $('#chatIdent').hidden = true; $('#chatBox').hidden = false; ligarChat(id); }
   else { const f = $('#chatIdent'); f.hidden = false; $('#chatBox').hidden = true; f.nome.value ||= m.nome || ''; f.telefone.value ||= m.telefone || ''; }
@@ -773,7 +783,7 @@ $('#chatIdent').addEventListener('submit', e => {
   e.preventDefault(); const f = e.target;
   if (digits(f.telefone.value).length < 10){ toast('Confira seu WhatsApp com DDD'); return; }
   salvarMe(f.nome.value.trim(), f.telefone.value.trim());
-  if (!lsGet(accountKey('conversaId'))) lsSet(accountKey('conversaId'), uid());
+  if (!lsGet(accountKey('conversaId'))) lsSet(accountKey('conversaId'), DEMO ? uid() : 'u_' + S.user.uid);
   vigiarConversa(); abrirChatSeTiver();
 });
 $('#chatForm').addEventListener('submit', async e => {
@@ -817,6 +827,7 @@ const conta = {
   },
   async criar(email, senha, nome, telefone){
     if (DEMO){ const cs = lsGet('demo:contas') || {}; if (cs[email]) throw { code: 'auth/email-already-in-use' }; if (senha.length < 6) throw { code: 'auth/weak-password' }; const u = { uid: uid(), email }; cs[email] = { uid: u.uid, senha }; lsSet('demo:contas', cs); await store.set('clientes', u.uid, { nome, telefone, email, criadoEm: Date.now() }); lsSet('demo:sessao', email); return conta.ligar(u); }
+    S.novoCadastro = { nome, telefone };
     const r = await fb.au.createUserWithEmailAndPassword(fb.auth, email, senha);
     try { await fb.au.updateProfile(r.user, { displayName: nome }); } catch (e) {}
     S.novoCadastro = { nome, telefone };
@@ -838,9 +849,15 @@ const conta = {
     let p = null; try { p = await store.get('clientes', u.uid); } catch (e) { console.error(e); }
     if (version !== sessionVersion) return;
     p = p || novo || {};
+    const acessos = DEMO ? null : await store.get('clienteAcessos', u.uid);
+    if (version !== sessionVersion) return;
+    S.acessos = acessos;
     S.user = { uid: u.uid, email: u.email, nome: p.nome || u.displayName || '', telefone: p.telefone || '' };
     if (S.user.nome || S.user.telefone) lsSet(accountKey('cliente'), { nome: S.user.nome, telefone: S.user.telefone });
     document.body.classList.remove('sem-login');
+    const ids = S.acessos?.conversaIds || [];
+    const atual = lsGet(accountKey('conversaId'));
+    if (!DEMO && (!atual || ![...ids, 'u_' + u.uid].includes(atual))) lsSet(accountKey('conversaId'), ids[0] || 'u_' + u.uid);
     ligarPerfil(); vigiarAgsDaConta(); watchMeus(); vigiarConversa();
     if (S.tab === 'perfil') renderPerfil();
   }
@@ -854,11 +871,11 @@ function limparSessao(){
   Object.keys(unsubMeus).forEach(k => delete unsubMeus[k]);
   unsubMsgs?.(); unsubMsgs = null; unsubConv?.(); unsubConv = null;
   unsubPerfil?.(); unsubPerfil = null;
-  S.user = null; S.meus = {}; S.msgs = []; S.conv = null;
+  S.user = null; S.acessos = null; S.meus = {}; S.msgs = []; S.conv = null;
   S.perfil = undefined; S.perfilKey = null; S.novoCadastro = null;
   S.serv = null; S.dia = null; S.hora = null; S.adds = []; S.recSel = '';
   $('#dados').reset(); $('#chatIdent').reset(); $('#chatForm').reset();
-  $('#v-meus').replaceChildren(); $('#v-perfil').replaceChildren(); $('#msgs').replaceChildren();
+  $('#chatHistorico').replaceChildren(); $('#v-meus').replaceChildren(); $('#v-perfil').replaceChildren(); $('#msgs').replaceChildren();
   closeSheet(); document.body.classList.add('sem-login'); go('agendar'); renderPassos();
 }
 

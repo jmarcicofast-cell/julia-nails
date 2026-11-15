@@ -113,3 +113,7 @@ Ficará assim:
 ## Correções e testes
 
 Consulte [docs/CORRECOES.md](docs/CORRECOES.md) para as correções da primeira etapa, testes automatizados e o plano de migração do Firebase. As mudanças de segurança e reserva concorrente precisam ser implantadas com migração; não substitua as regras de produção isoladamente.
+
+## Segurança e migração (versão 2)
+
+Antes de publicar esta branch, siga [docs/MIGRACAO-FIREBASE.md](docs/MIGRACAO-FIREBASE.md). As páginas dependem de regras novas, função Firebase e mapa de titularidade aplicado. Não publique apenas o HTML.

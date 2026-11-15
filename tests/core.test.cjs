@@ -24,32 +24,12 @@ for(const file of ['index.html','agendar.html'])test(file+': disponibilidade res
  assert.equal(ctx.slotsDoDia(cfg,[],'2099-01-06',-1,0).length,0);
  assert.equal(ctx.slotsDoDia(cfg,[],'2099-01-06',0,0).length,0);
 });
-function paymentStore(initial){
+test('painel encaminha pagamento ao servidor em vez de gravar venda e status separadamente',async()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const source=html.slice(html.indexOf('const CFG ='),html.indexOf('/* ================= UTILITÁRIOS'));
- const docs=new Map([['agendamentos/a',structuredClone(initial)]]);
- let commits=0;
- const f={doc:(_db,col,id)=>col+'/'+id,runTransaction:async(_db,fn)=>{
-  const staged=[];
-  const result=await fn({get:async ref=>({exists:()=>docs.has(ref),data:()=>structuredClone(docs.get(ref))}),set:(ref,d)=>staged.push([ref,d]),update:(ref,d)=>staged.push([ref,{...docs.get(ref),...d}])});
-  if(staged.length)commits++;
-  for(const [ref,d]of staged)docs.set(ref,structuredClone(d));return result;
- }};
- const context=vm.createContext({window:{APP_CONFIG:{firebase:{apiKey:'TEST'}}},EventTarget,Event,addEventListener:()=>{},localStorage:{getItem:()=>null},mock:{f,db:{}},Date,Math,Number});
+ const calls=[];
+ const context=vm.createContext({window:{APP_CONFIG:{firebase:{apiKey:'TEST'}}},EventTarget,Event,addEventListener:()=>{},mock:{call:async data=>{calls.push(data);return {data:{status:'concluido'}}}},Date,Math,Number});
  vm.runInContext(source+'\nfb=mock;globalThis.store=store;',context);
- return {store:context.store,docs,commits:()=>commits};
-}
-test('pagamento repetido mantém uma venda e uma atualização de status',async()=>{
- const env=paymentStore({status:'pendente',entrada:{status:'informada'}});
- await env.store.registrarPagamento('a','entrada',{valor:35},{entrada:{status:'recebida'}});
- await env.store.registrarPagamento('a','entrada',{valor:35},{entrada:{status:'recebida'}});
- assert.equal(env.commits(),1);assert.equal(env.docs.get('vendas/entrada:a').valor,35);assert.equal(env.docs.size,2);
- await env.store.registrarPagamento('a','servico',{valor:35},{status:'concluido'});
- await env.store.registrarPagamento('a','servico',{valor:35},{status:'concluido'});
- assert.equal(env.commits(),2);assert.equal(env.docs.size,3);
-});
-test('agendamento cancelado e valor negativo não geram movimentações',async()=>{
- for(const [ag,valor]of [[{status:'cancelado'},35],[{status:'confirmado'},-1]]){
-  const env=paymentStore(ag);await assert.rejects(env.store.registrarPagamento('a','servico',{valor},{status:'concluido'}));assert.equal(env.commits(),0);assert.equal(env.docs.size,1);
- }
+ const result=await context.store.registrarPagamento('a','servico',{valor:35},{status:'concluido'});
+ assert.equal(result.status,'concluido');assert.equal(calls.length,1);assert.equal(calls[0].action,'pagamento');assert.equal(calls[0].id,'a');
 });

@@ -1,3 +1,5 @@
+> Atualização: a etapa 2 foi implementada para revisão e testes locais. Consulte [MIGRACAO-FIREBASE.md](MIGRACAO-FIREBASE.md) para regras, função de reserva e migração. A descrição abaixo registra o escopo da etapa 1; as pendências de código de segurança foram tratadas na etapa 2, mas a implantação e migração reais continuam pendentes.
+
 # Correções — etapa 1
 
 Esta branch corrige os problemas reproduzidos no aplicativo, sem alterar o Firebase de produção. As páginas continuam nos mesmos endereços; não há migração de framework ou remoção de telas/ações.

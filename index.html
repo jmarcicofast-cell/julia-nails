@@ -279,11 +279,15 @@ async function initStore(){
   const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
   const [a, f, au] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), import(base + 'firebase-auth.js')]);
   const app = a.initializeApp(CFG.firebase);
-  fb = { f, au, db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }), auth: au.getAuth(app) };
+  const fn = await import(base + 'firebase-functions.js');
+  const call = fn.httpsCallable(fn.getFunctions(app, 'southamerica-east1'), 'agendaSegura');
+  fb = { f, au, db: f.initializeFirestore(app, { ignoreUndefinedProperties: true }), auth: au.getAuth(app), call };
 }
 const store = {
   async set(path, id, data){
     if (DEMO){ const c = demoCol(path); c[id] = { ...(c[id] || {}), ...data }; demoSave(path, c); return id; }
+    if (path === 'ocupados') return id; // Managed atomically by agendaSegura.
+    if (path === 'agendamentos') { await fb.call({ action: 'salvar', id, data }); return id; }
     await fb.f.setDoc(fb.f.doc(fb.db, path, id), data, { merge: true }); return id;
   },
   add(path, data){ return store.set(path, uid(), data); },
@@ -305,17 +309,13 @@ const store = {
       lsSet('demo:vendas', vendas); lsSet('demo:agendamentos', ags); bus.dispatchEvent(new Event('ch'));
       return ags[id];
     }
-    return fb.f.runTransaction(fb.db, async tx => {
-      const ref = fb.f.doc(fb.db, 'agendamentos', id);
-      const snap = await tx.get(ref), ag = snap.exists() ? snap.data() : null;
-      if (!valida(ag)) return ag;
-      tx.set(fb.f.doc(fb.db, 'vendas', vendaId), venda);
-      tx.update(ref, patch);
-      return { ...ag, ...patch };
-    });
+    const result = await fb.call({ action: 'pagamento', id, tipo, venda, patch });
+    return result.data;
   },
   async remove(path, id){
     if (DEMO){ const c = demoCol(path); delete c[id]; demoSave(path, c); return; }
+    if (path === 'ocupados') return;
+    if (path === 'agendamentos') { await fb.call({ action: 'excluir', id }); return; }
     await fb.f.deleteDoc(fb.f.doc(fb.db, path, id));
   },
   watch(path, cb, onErr){
@@ -678,7 +678,7 @@ function formAgendamento(pre = {}){
       if (vEnt > 0){
         const forma = (f.querySelector('[name=forma]:checked') || {}).value || 'pix';
         data.entrada = { valor: vEnt, percentual: preco ? Math.round(vEnt / preco * 100) : 0, forma, status: 'recebida', recebidaEm: Date.now(), manual: true };
-        await store.add('vendas', { data: ymd(new Date()), descricao: data.servicoNome, tipo: 'entrada', cliente: data.nome, valor: vEnt, forma, agendamentoId: id, criadoEm: Date.now() });
+        if (DEMO) await store.add('vendas', { data: ymd(new Date()), descricao: data.servicoNome, tipo: 'entrada', cliente: data.nome, valor: vEnt, forma, agendamentoId: id, criadoEm: Date.now() });
       }
       await store.set('agendamentos', id, data);
       await store.set('ocupados', id, { data: data.data, ini, fim });
@@ -1142,6 +1142,13 @@ async function syncPerfis(){
   const grupos = {};
   S.ags.forEach(a => { const k = R.chave(a.telefone); if (k) (grupos[k] = grupos[k] || []).push(a); });
   const atual = Object.fromEntries(S.perfis.map(p => [p.id, p]));
+  const porUid = {};
+  S.ags.forEach(a => { if (a.clienteUid) (porUid[a.clienteUid] ||= []).push(a); });
+  for (const [uid, ags] of Object.entries(porUid)) {
+    const perfil = R.calcular(ags, S.cfg, R.chave(ags[0]?.telefone));
+    const id = 'u_' + uid; const antes = atual[id];
+    if (!antes || ['nome','concluidos','ganhas','usadas','estrelas','ultimaVisita'].some(k => antes[k] !== perfil[k]) || JSON.stringify(antes.emblemas) !== JSON.stringify(perfil.emblemas)) await store.set('perfis', id, perfil);
+  }
   for (const [k, ags] of Object.entries(grupos)){
     const p = R.calcular(ags, S.cfg, k); const o = atual[k] || {};
     const igual = ['nome', 'concluidos', 'ganhas', 'usadas', 'estrelas', 'ultimaVisita'].every(x => o[x] === p[x]) && JSON.stringify(o.emblemas || []) === JSON.stringify(p.emblemas);
